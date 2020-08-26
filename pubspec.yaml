@@ -24,6 +24,7 @@ dependencies:
   syncfusion_flutter_calendar: ^18.2.54
   material_design_icons_flutter: ^4.0.5345
   http: ^0.12.2
+  flutter_bloc: ^6.0.2
   flutter:
     sdk: flutter
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ruz/HexColor.dart';
 import 'package:ruz/pages/settings.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -7,6 +8,7 @@ import 'constants.dart';
 import 'package:syncfusion_flutter_core/core.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'ruz.dart';
+import 'pages/search_group.dart';
 import 'pages/settings.dart';
 
 void main() {
@@ -46,10 +48,13 @@ class _HomePageState extends State<HomePage> {
       groupId: '12435', // read from file
       startDate: '2020.08.31', //DateTime.now().subtract(Duration(days: 2))
       endDate: '2020.09.23', //DateTime.now().add(Duration(days: 14))
-    ).then((value) {
-      events = _DataSource(value);
-      setState(() {});
-    });
+    ).then(
+      (value) {
+        events = _DataSource(value);
+        setState(() {});
+      },
+    );
+    // events = _DataSource([]);
   }
 
   void switchView() {
@@ -176,7 +181,12 @@ class HomeDrawer extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                      MaterialPageRoute(builder: (context) {
+                        return BlocProvider(
+                          create: (_) => GroupBloc(GroupSearchState.initial()),
+                          child: SettingsPage(),
+                        );
+                      }),
                     );
                   }),
               ListTile(

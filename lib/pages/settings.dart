@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ruz/HexColor.dart';
 import 'package:ruz/constants.dart';
+import 'package:ruz/pages/search_group.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key}) : super(key: key);
@@ -10,6 +12,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  String selectedGroupVal = 'БМН 192';
   static const scheduleType = <String>['By group', 'By name'];
   static String selectedVal; // read from file
   List<DropdownMenuItem<String>> menuItems = scheduleType
@@ -77,10 +80,18 @@ class _SettingsPageState extends State<SettingsPage> {
           Spacer(),
           Expanded(
               child: ListTile(
-            title: Text('БМН 192', style: settingsTextStyle),
+            title: Text(selectedGroupVal, style: settingsTextStyle),
             trailing: Icon(Icons.edit, color: Colors.white, size: 18),
-            onTap: () {
-              print('Search group...');
+            onTap: () async {
+              Group selectedGroup = await showSearch(
+                context: context,
+                delegate: GroupSearch(BlocProvider.of<GroupBloc>(context)),
+              );
+              if (selectedGroup != null) {
+                setState(() {
+                  selectedGroupVal = selectedGroup.name;
+                });
+              }
             },
             contentPadding: EdgeInsets.only(left: 55),
           )),
