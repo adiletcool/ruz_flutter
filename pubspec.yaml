@@ -25,6 +25,7 @@ dependencies:
   material_design_icons_flutter: ^4.0.5345
   http: ^0.12.2
   flutter_bloc: ^6.0.2
+  shared_preferences: ^0.5.8
   flutter:
     sdk: flutter
 

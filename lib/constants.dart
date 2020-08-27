@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String licenseKey =
     'NT8mJyc2IWhia31hfWN9Z2doYmF8YGJ8ampqanNiYmlmamlmanMDHmgyNzo/NicwPDw/YhM0PjI6P30wPD4=';
@@ -17,3 +18,37 @@ TextStyle settingsTextStyle = mainStyle.copyWith(
     fontSize: 18, color: Colors.white, fontWeight: FontWeight.w300);
 TextStyle searchTextStyle =
     mainStyle.copyWith(fontSize: 18, color: Colors.black);
+
+void saveSettings(
+  String selectedType,
+  String selectedGroupName,
+  String selectedGroupId,
+  String selectedStudentName,
+  String selectedStudentId,
+) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  prefs.setString('selectedType', selectedType);
+  prefs.setString('selectedGroupName', selectedGroupName);
+  prefs.setString('selectedGroupId', selectedGroupId);
+  prefs.setString('selectedStudentName', selectedStudentName);
+  prefs.setString('selectedStudentId', selectedStudentId);
+
+  print('Settings were saved.');
+}
+
+Future<Map<String, String>> getSettings() async {
+  Map<String, String> settings = {};
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  for (var value in [
+    'selectedType',
+    'selectedGroupName',
+    'selectedGroupId',
+    'selectedStudentName',
+    'selectedStudentId'
+  ]) {
+    settings[value] = prefs.getString(value);
+  }
+  return settings;
+}

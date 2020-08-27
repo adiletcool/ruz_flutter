@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ruz/HexColor.dart';
 import 'package:ruz/pages/settings.dart';
@@ -7,10 +8,11 @@ import 'HexColor.dart';
 import 'constants.dart';
 import 'package:syncfusion_flutter_core/core.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-// import 'ruz.dart';
+import 'ruz.dart';
 import 'pages/search_group.dart';
 import 'pages/search_student.dart';
 import 'pages/settings.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   SyncfusionLicense.registerLicense(licenseKey);
@@ -24,6 +26,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: HomePage(),
       theme: ThemeData(fontFamily: 'PTRootUI'),
+      routes: {'HomePage': (context) => HomePage()},
     );
   }
 }
@@ -42,20 +45,35 @@ class _HomePageState extends State<HomePage> {
   Icon viewIcon = Icon(MdiIcons.viewWeekOutline);
   CalendarView viewType = CalendarView.schedule;
 
+  String scheduleType;
+  String groupId;
+  String groupName = '';
+  String studentName = '';
+  String studentId;
+
   @override
   void initState() {
     super.initState();
-    // getAppointments(
-    //   groupId: '12435', // read from file
-    //   startDate: '2020.08.31', //DateTime.now().subtract(Duration(days: 2))
-    //   endDate: '2020.09.23', //DateTime.now().add(Duration(days: 14))
-    // ).then(
-    //   (value) {
-    //     events = _DataSource(value);
-    //     setState(() {});
-    //   },
-    // );
-    events = _DataSource([]);
+    getSettings().then((res) {
+      setState(() {
+        scheduleType = res['selectedType'];
+        groupId = res['selectedGroupId'];
+        groupName = res['selectedGroupName'] ??= '';
+        studentName = res['selectedStudentName'] ??= '';
+        studentId = res['selectedStudentId'];
+      });
+      // check schedule Type > return schedule according to groupId/studentId
+      if (groupId != null) {
+        DateFormat formatter = DateFormat('yyyy.MM.dd');
+        DateTime now = DateTime.now();
+        getAppointments(
+          groupId: groupId, // read from file
+          startDate: formatter.format(now.subtract(Duration(days: 2))),
+          endDate: formatter.format(now.add(Duration(days: 14))),
+        ).then((value) => setState(() => events = _DataSource(value)));
+      } else
+        setState(() => events = _DataSource([]));
+    });
   }
 
   void switchView() {
@@ -80,64 +98,102 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        key: _drawerKey,
-        drawer: HomeDrawer(),
-        body: Stack(
-          alignment: AlignmentDirectional.topStart,
-          children: <Widget>[
-            SfCalendar(
-              view: viewType,
-              dataSource: events,
-              onTap: (CalendarTapDetails details) => openSubjectInfo(details),
-              firstDayOfWeek: 1,
-              appointmentTimeTextFormat: 'Hm',
-              timeSlotViewSettings: TimeSlotViewSettings(
-                timeFormat: 'Hm',
-                startHour: 7,
-                endHour: 22,
-                timeTextStyle: timeTextStyle,
-              ),
-              viewHeaderStyle: ViewHeaderStyle(
-                dateTextStyle: dateTextStyle,
-                dayTextStyle: dateTextStyle,
-              ),
-              initialDisplayDate: DateTime.now(),
-              todayHighlightColor: HexColor.fromHex('#1b5c94'),
-              monthViewSettings: MonthViewSettings(),
-              scheduleViewSettings: ScheduleViewSettings(
-                appointmentTextStyle: mainStyle,
-                dayHeaderSettings: DayHeaderSettings(dateTextStyle: dateStyle),
-                hideEmptyScheduleWeek: true,
-                monthHeaderSettings: MonthHeaderSettings(
-                  backgroundColor: HexColor.fromHex('#27363b'),
-                  height: 60,
-                  monthTextStyle: monthStyle.copyWith(height: 0.7),
-                ),
-                weekHeaderSettings: WeekHeaderSettings(
-                  weekTextStyle: mainStyle.copyWith(color: Colors.blueGrey),
-                ),
-              ),
-              headerStyle: CalendarHeaderStyle(
-                textStyle: headerStyle,
-                textAlign: TextAlign.end,
-              ),
-            ),
-            IconButton(
-                icon: Icon(Icons.menu),
-                onPressed: () {
-                  _drawerKey.currentState.openDrawer();
-                }),
-            Positioned(
-                left: 60,
-                child: IconButton(
-                    icon: viewIcon,
-                    onPressed: () {
-                      switchView();
-                    })),
-          ],
+    Widget mainBody = Stack(
+      alignment: AlignmentDirectional.topStart,
+      children: <Widget>[
+        MyCalendar(
+            viewType: viewType,
+            events: events,
+            openSubjectInfo: (details) => openSubjectInfo(details)),
+        IconButton(
+            icon: Icon(Icons.menu),
+            onPressed: () => _drawerKey.currentState.openDrawer()),
+        Positioned(
+            left: 60,
+            child: IconButton(icon: viewIcon, onPressed: () => switchView())),
+        Positioned(
+            top: 12,
+            left: 120,
+            child: Text(
+              scheduleType == 'By group' ? groupName : '',
+              style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
+            ))
+      ],
+    );
+
+    Widget firstLaunchBody = Center(
+      child: OutlineButton(
+        child: Text('Set schedule settings', style: dateStyle),
+        onPressed: () => openSettingsPage(context),
+      ),
+    );
+
+    return WillPopScope(
+      onWillPop: () async {
+        SystemNavigator.pop();
+        return;
+      },
+      child: SafeArea(
+        child: Scaffold(
+          key: _drawerKey,
+          drawer: HomeDrawer(),
+          body: scheduleType != null ? mainBody : firstLaunchBody,
         ),
+      ),
+    );
+  }
+}
+
+class MyCalendar extends StatelessWidget {
+  const MyCalendar({
+    Key key,
+    @required this.viewType,
+    @required this.events,
+    @required this.openSubjectInfo,
+  }) : super(key: key);
+
+  final CalendarView viewType;
+  final _DataSource events;
+  final Function openSubjectInfo;
+
+  @override
+  Widget build(BuildContext context) {
+    return SfCalendar(
+      view: viewType,
+      dataSource: events,
+      onTap: (CalendarTapDetails details) => openSubjectInfo(details),
+      firstDayOfWeek: 1,
+      appointmentTimeTextFormat: 'Hm',
+      timeSlotViewSettings: TimeSlotViewSettings(
+        timeFormat: 'Hm',
+        startHour: 8,
+        endHour: 23,
+        timeInterval: Duration(minutes: 30),
+        timeTextStyle: timeTextStyle,
+      ),
+      viewHeaderStyle: ViewHeaderStyle(
+        dateTextStyle: dateTextStyle,
+        dayTextStyle: dateTextStyle,
+      ),
+      initialDisplayDate: DateTime.now(),
+      todayHighlightColor: HexColor.fromHex('#1b5c94'),
+      monthViewSettings: MonthViewSettings(),
+      scheduleViewSettings: ScheduleViewSettings(
+        appointmentTextStyle: mainStyle,
+        dayHeaderSettings: DayHeaderSettings(dateTextStyle: dateStyle),
+        hideEmptyScheduleWeek: true,
+        monthHeaderSettings: MonthHeaderSettings(
+          backgroundColor: HexColor.fromHex('#27363b'),
+          height: 60,
+          monthTextStyle: monthStyle.copyWith(height: 0.7),
+        ),
+        weekHeaderSettings: WeekHeaderSettings(
+          weekTextStyle: mainStyle.copyWith(color: Colors.blueGrey),
+        ),
+      ),
+      headerStyle: CalendarHeaderStyle(
+        textStyle: headerStyle,
+        textAlign: TextAlign.end,
       ),
     );
   }
@@ -164,6 +220,10 @@ class HomeDrawer extends StatelessWidget {
             children: <Widget>[
               ListTile(
                 contentPadding: EdgeInsets.only(left: 20),
+                // leading: IconButton(
+                //   icon: Icon(Icons.menu, color: Colors.white),
+                //   onPressed: () => Navigator.pop(context),
+                // ),
                 title: Text('Schedule', style: drawerTextStyle),
               ),
               Divider(color: Colors.white, thickness: 1.2),
@@ -179,20 +239,7 @@ class HomeDrawer extends StatelessWidget {
                   title: Text('Settings',
                       style:
                           drawerTextStyle.copyWith(fontSize: 19, height: .7)),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) {
-                        return MultiBlocProvider(
-                          providers: [
-                            BlocProvider(create: (_) => GroupBloc()),
-                            BlocProvider(create: (_) => StudentBloc()),
-                          ],
-                          child: SettingsPage(),
-                        );
-                      }),
-                    );
-                  }),
+                  onTap: () => openSettingsPage(context)),
               ListTile(
                 leading:
                     Icon(Icons.info_outline, size: 18, color: Colors.white),
@@ -206,4 +253,19 @@ class HomeDrawer extends StatelessWidget {
       ),
     );
   }
+}
+
+void openSettingsPage(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) {
+      return MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => GroupBloc()),
+          BlocProvider(create: (_) => StudentBloc()),
+        ],
+        child: SettingsPage(),
+      );
+    }),
+  );
 }
