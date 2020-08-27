@@ -11,6 +11,12 @@ Future<List> getGroupSuggestion(String group) async {
   return json.decode(response.body);
 }
 
+Future<List> getStudentNameSuggestion(String name) async {
+  final String url = 'https://ruz.hse.ru/api/search?term=$name&type=student';
+  final response = await http.Client().get(url);
+  return json.decode(response.body);
+}
+
 Future<List> getGroupSchedule({groupId, startDate, endDate, lng = 1}) async {
   final String baseUrl = 'ruz.hse.ru';
 

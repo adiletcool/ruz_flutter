@@ -15,3 +15,5 @@ TextStyle drawerTextStyle = mainStyle.copyWith(
     fontSize: 22, color: Colors.white, fontWeight: FontWeight.w300);
 TextStyle settingsTextStyle = mainStyle.copyWith(
     fontSize: 18, color: Colors.white, fontWeight: FontWeight.w300);
+TextStyle searchTextStyle =
+    mainStyle.copyWith(fontSize: 18, color: Colors.black);

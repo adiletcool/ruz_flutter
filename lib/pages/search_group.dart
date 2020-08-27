@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:ruz/constants.dart';
 
 import '../ruz.dart';
 
 class Group {
   final String name;
-  const Group(this.name);
+  final String id;
+  const Group(this.name, this.id);
 
   @override
-  String toString() => name;
+  String toString() => 'Group(name: $name, id: $id)';
 }
 
 class GroupSearch extends SearchDelegate<Group> {
@@ -21,7 +24,9 @@ class GroupSearch extends SearchDelegate<Group> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-        icon: BackButtonIcon(), onPressed: () => close(context, null));
+      icon: BackButtonIcon(),
+      onPressed: () => close(context, null),
+    );
   }
 
   @override
@@ -39,14 +44,14 @@ class GroupSearch extends SearchDelegate<Group> {
           }
 
           return ListView.builder(
+            itemCount: state.groups.length,
             itemBuilder: (context, index) {
               return ListTile(
-                leading: Icon(Icons.group),
-                title: Text(state.groups[index].name),
+                leading: Icon(MdiIcons.accountGroup, color: Colors.black),
+                title: Text(state.groups[index].name, style: searchTextStyle),
                 onTap: () => close(context, state.groups[index]),
               );
             },
-            itemCount: state.groups.length,
           );
         });
   }
@@ -58,8 +63,6 @@ class GroupSearch extends SearchDelegate<Group> {
 class GroupSearchEvent {
   final String query;
   const GroupSearchEvent(this.query);
-  @override
-  String toString() => 'GroupSearchEvent { query: $query }';
 }
 
 class GroupSearchState {
@@ -70,70 +73,44 @@ class GroupSearchState {
   const GroupSearchState({this.isLoading, this.groups, this.hasError});
 
   factory GroupSearchState.initial() {
-    return GroupSearchState(
-      groups: [],
-      isLoading: false,
-      hasError: false,
-    );
+    return GroupSearchState(groups: [], isLoading: false, hasError: false);
   }
 
   factory GroupSearchState.loading() {
-    return GroupSearchState(
-      groups: [],
-      isLoading: true,
-      hasError: false,
-    );
+    return GroupSearchState(groups: [], isLoading: true, hasError: false);
   }
 
   factory GroupSearchState.success(List<Group> groups) {
-    return GroupSearchState(
-      groups: groups,
-      isLoading: false,
-      hasError: false,
-    );
+    return GroupSearchState(groups: groups, isLoading: false, hasError: false);
   }
 
   factory GroupSearchState.error() {
-    return GroupSearchState(
-      groups: [],
-      isLoading: false,
-      hasError: true,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'GroupSearchState {cities: ${groups.toString()}, isLoading: $isLoading, hasError: $hasError }';
+    return GroupSearchState(groups: [], isLoading: false, hasError: true);
   }
 }
 
 class GroupBloc extends Bloc<GroupSearchEvent, GroupSearchState> {
-  GroupBloc(GroupSearchState initialState) : super(initialState);
+  GroupBloc() : super(GroupSearchState.initial());
 
   @override
   Stream<GroupSearchState> mapEventToState(GroupSearchEvent event) async* {
     yield GroupSearchState.loading();
 
     try {
-      List<Group> cities = await _getSearchResults(event.query);
-      yield GroupSearchState.success(cities);
+      List<Group> groups = await _getSearchResults(event.query);
+      yield GroupSearchState.success(groups);
     } catch (_) {
       yield GroupSearchState.error();
     }
   }
 
   Future<List<Group>> _getSearchResults(String query) async {
-    // Simulating network latency
     var groupsFound = await getGroupSuggestion(query);
-    print(groupsFound);
 
     List<Group> res = List.generate(groupsFound.length, (index) {
-      return Group(groupsFound[index]['groupName']); // key????
+      return Group(groupsFound[index]['label'], groupsFound[index]['id']);
     });
 
-    print(res);
-    // return res;
-
-    return [Group('БМН 177')];
+    return res;
   }
 }

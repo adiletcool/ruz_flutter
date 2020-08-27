@@ -4,6 +4,8 @@ import 'package:ruz/HexColor.dart';
 import 'package:ruz/constants.dart';
 import 'package:ruz/pages/search_group.dart';
 
+import 'search_student.dart';
+
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key}) : super(key: key);
 
@@ -12,9 +14,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String selectedGroupVal = 'БМН 192';
+  String selectedGroupVal;
+  String selectedGroupId; // read from file
+  String selectedStudentName;
+  String selectedStudentId;
+
   static const scheduleType = <String>['By group', 'By name'];
-  static String selectedVal; // read from file
+  static String selectedType;
+
   List<DropdownMenuItem<String>> menuItems = scheduleType
       .map((String value) => DropdownMenuItem(
             child: Text(value, style: settingsTextStyle),
@@ -25,7 +32,12 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    selectedVal = 'By group';
+    // read from file (List<String> см NotesApp)
+    selectedType = 'By group';
+    selectedGroupVal = 'БМН 192';
+    selectedGroupId = '';
+    selectedStudentName = 'Абираев Адилет Максатбекович';
+    selectedStudentId = '';
   }
 
   @override
@@ -52,11 +64,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       elevation: 1,
                       items: menuItems,
                       onChanged: (String newValue) {
-                        setState(() {
-                          selectedVal = newValue;
-                        });
+                        setState(() => selectedType = newValue);
                       },
-                      value: selectedVal,
+                      value: selectedType,
                     ),
                   ]),
                   SizedBox(height: 20),
@@ -73,7 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget getSettings() {
-    if (selectedVal == 'By group') {
+    if (selectedType == 'By group') {
       return Row(
         children: <Widget>[
           Text('Group: ', style: settingsTextStyle),
@@ -82,18 +92,20 @@ class _SettingsPageState extends State<SettingsPage> {
               child: ListTile(
             title: Text(selectedGroupVal, style: settingsTextStyle),
             trailing: Icon(Icons.edit, color: Colors.white, size: 18),
+            contentPadding: EdgeInsets.only(left: 40),
             onTap: () async {
               Group selectedGroup = await showSearch(
                 context: context,
                 delegate: GroupSearch(BlocProvider.of<GroupBloc>(context)),
               );
+
               if (selectedGroup != null) {
                 setState(() {
                   selectedGroupVal = selectedGroup.name;
+                  selectedGroupId = selectedGroup.id;
                 });
               }
             },
-            contentPadding: EdgeInsets.only(left: 55),
           )),
         ],
       );
@@ -104,13 +116,22 @@ class _SettingsPageState extends State<SettingsPage> {
           SizedBox(width: 150),
           Expanded(
               child: ListTile(
-            title:
-                Text('Абираев Адилет Максатбекович', style: settingsTextStyle),
+            title: Text(selectedStudentName, style: settingsTextStyle),
             trailing: Icon(Icons.edit, color: Colors.white, size: 18),
-            onTap: () {
-              print('Change name...');
-            },
             contentPadding: EdgeInsets.only(left: 0),
+            onTap: () async {
+              Student selectedName = await showSearch(
+                context: context,
+                delegate: StudentSearch(BlocProvider.of<StudentBloc>(context)),
+              );
+
+              if (selectedName != null) {
+                setState(() {
+                  selectedStudentName = selectedName.name;
+                  selectedStudentId = selectedName.id;
+                });
+              }
+            },
           )),
         ],
       );
