@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-
-import 'HexColor.dart';
+import 'constants.dart';
 
 Future<List> getGroupSuggestion(String group) async {
   final String url = 'https://ruz.hse.ru/api/search?term=$group&type=group';
@@ -30,6 +29,13 @@ Future<List> getGroupSchedule({groupId, startDate, endDate, lng = 1}) async {
   return json.decode(response.body);
 }
 
+Future getSubjectURL(disciplineinplan) async {
+  var url =
+      'https://www.hse.ru/api/timetable/proposal-items?ptm=$disciplineinplan&locale=ru';
+  var resp = await http.get(url);
+  return json.decode(resp.body);
+}
+
 Future<List<Appointment>> getAppointments({groupId, startDate, endDate}) async {
   List groupSchedule = await getGroupSchedule(
       groupId: groupId, startDate: startDate, endDate: endDate);
@@ -38,19 +44,32 @@ Future<List<Appointment>> getAppointments({groupId, startDate, endDate}) async {
     var date = groupSchedule[index]['date'];
     var beginTime = groupSchedule[index]['beginLesson'];
     var endTime = groupSchedule[index]['endLesson'];
-    var discipline = groupSchedule[index]['discipline'];
-    var lessonType = groupSchedule[index]['kindOfWork'];
+    String discipline = groupSchedule[index]['discipline'];
+    String lessonType = groupSchedule[index]['kindOfWork'];
     var auditorium = groupSchedule[index]['auditorium'];
-    var location = groupSchedule[index]['building'];
-    var teacher = groupSchedule[index]['lecturer'];
+    String location = groupSchedule[index]['building'];
+    String teacher = groupSchedule[index]['lecturer'];
+    var appColor = getAppointmentColor(lessonType);
+    String disciplineId = groupSchedule[index]['disciplineinplan'];
+
+    String notesEnc = json.encode({
+      'date': date,
+      'beginTime': beginTime,
+      'endTime': endTime,
+      'discipline': discipline,
+      'lessonType': lessonType,
+      'auditorium': auditorium,
+      'location': location,
+      'teacher': teacher,
+      'disciplineId': disciplineId,
+    });
 
     return Appointment(
-        color: HexColor.fromHex('#346E86'),
+        color: appColor,
         startTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $beginTime'),
         endTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $endTime'),
         subject: '$discipline, $lessonType',
-        notes: 'Адрес: $location\n$teacher',
-        location: auditorium);
+        notes: notesEnc);
   });
   return mySchedule;
 }

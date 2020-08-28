@@ -65,45 +65,48 @@ class _SettingsPageState extends State<SettingsPage> {
         goBackHome();
         return;
       },
-      child: Scaffold(
-        appBar: AppBar(
-            title: Text('Settings', style: mainStyle),
-            backgroundColor: Colors.black87,
-            elevation: 1,
-            leading: IconButton(
-                icon: Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
-                onPressed: () => goBackHome())),
-        body: CustomScrollView(
-          slivers: <Widget>[
-            SliverFillRemaining(
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-                color: HexColor.fromHex('#1A2026'),
-                child: Column(
-                  children: <Widget>[
-                    Row(children: <Widget>[
-                      Text('Schedule: ', style: settingsTextStyle),
-                      Spacer(),
-                      DropdownButton(
-                        dropdownColor: Colors.grey,
-                        elevation: 1,
-                        items: menuItems,
-                        onChanged: (String newValue) {
-                          setState(() => selectedType = newValue);
-                          _saveSettings();
-                        },
-                        value: selectedType,
-                      ),
-                    ]),
-                    SizedBox(height: 20),
-                    Divider(color: Colors.white),
-                    SizedBox(height: 20),
-                    getSettingsWidget(),
-                  ],
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+              title: Text('Settings', style: mainStyle),
+              backgroundColor: Colors.black87,
+              elevation: 1,
+              leading: IconButton(
+                  icon:
+                      Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+                  onPressed: () => goBackHome())),
+          body: CustomScrollView(
+            slivers: <Widget>[
+              SliverFillRemaining(
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                  color: HexColor.fromHex('#1A2026'),
+                  child: Column(
+                    children: <Widget>[
+                      Row(children: <Widget>[
+                        Text('Schedule: ', style: settingsTextStyle),
+                        Spacer(),
+                        DropdownButton(
+                          dropdownColor: Colors.grey,
+                          elevation: 1,
+                          items: menuItems,
+                          onChanged: (String newValue) {
+                            setState(() => selectedType = newValue);
+                            _saveSettings();
+                          },
+                          value: selectedType,
+                        ),
+                      ]),
+                      SizedBox(height: 20),
+                      Divider(color: Colors.white),
+                      SizedBox(height: 20),
+                      getSettingsWidget(),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );

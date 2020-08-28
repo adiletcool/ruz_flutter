@@ -2,13 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'HexColor.dart';
+
 String licenseKey =
     'NT8mJyc2IWhia31hfWN9Z2doYmF8YGJ8ampqanNiYmlmamlmanMDHmgyNzo/NicwPDw/YhM0PjI6P30wPD4=';
 TextStyle mainStyle = TextStyle(fontFamily: 'PTRootUI');
 TextStyle dateStyle = mainStyle.copyWith(color: Colors.black, fontSize: 24);
 TextStyle monthStyle = mainStyle.copyWith(fontSize: 30);
 TextStyle headerStyle =
-    dateStyle.copyWith(fontSize: 20, fontWeight: FontWeight.w600);
+    dateStyle.copyWith(fontSize: 20, fontWeight: FontWeight.w600, height: 2);
 TextStyle timeTextStyle = mainStyle.copyWith(color: Colors.black54);
 TextStyle dateTextStyle =
     mainStyle.copyWith(color: Colors.black, fontWeight: FontWeight.w600);
@@ -18,6 +20,7 @@ TextStyle settingsTextStyle = mainStyle.copyWith(
     fontSize: 18, color: Colors.white, fontWeight: FontWeight.w300);
 TextStyle searchTextStyle =
     mainStyle.copyWith(fontSize: 18, color: Colors.black);
+TextStyle settingsMidRowStyle = mainStyle.copyWith(fontSize: 16);
 
 void saveSettings(
   String selectedType,
@@ -51,4 +54,10 @@ Future<Map<String, String>> getSettings() async {
     settings[value] = prefs.getString(value);
   }
   return settings;
+}
+
+Color getAppointmentColor(lessonType) {
+  return ['лекция', 'lecture'].contains(lessonType.toLowerCase())
+      ? HexColor.fromHex('#346E86')
+      : HexColor.fromHex('#2b2d42');
 }

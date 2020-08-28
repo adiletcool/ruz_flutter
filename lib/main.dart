@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +10,7 @@ import 'HexColor.dart';
 import 'constants.dart';
 import 'package:syncfusion_flutter_core/core.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'pages/subject_page.dart';
 import 'ruz.dart';
 import 'pages/search_group.dart';
 import 'pages/search_student.dart';
@@ -26,7 +29,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: HomePage(),
       theme: ThemeData(fontFamily: 'PTRootUI'),
-      routes: {'HomePage': (context) => HomePage()},
+      routes: {
+        'HomePage': (context) => HomePage(),
+      },
     );
   }
 }
@@ -50,6 +55,7 @@ class _HomePageState extends State<HomePage> {
   String groupName = '';
   String studentName = '';
   String studentId;
+  bool isSettingsLoaded = false;
 
   @override
   void initState() {
@@ -61,6 +67,7 @@ class _HomePageState extends State<HomePage> {
         groupName = res['selectedGroupName'] ??= '';
         studentName = res['selectedStudentName'] ??= '';
         studentId = res['selectedStudentId'];
+        isSettingsLoaded = true;
       });
       // check schedule Type > return schedule according to groupId/studentId
       if (groupId != null) {
@@ -91,9 +98,20 @@ class _HomePageState extends State<HomePage> {
      препод, аудитория) */
     List<dynamic> res = details.appointments;
     if (res != null) {
-      var result = res[0];
-      print(result.subject + '. ' + result.notes);
+      String notesEncoded = res[0].notes;
+      var notesDecoded = json.decode(notesEncoded);
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => SubjectPage(notes: notesDecoded)));
     }
+  }
+
+  String getStudentName() {
+    if (studentName == 'Find your name')
+      return 'Set name';
+    else
+      return studentName;
   }
 
   @override
@@ -112,11 +130,14 @@ class _HomePageState extends State<HomePage> {
             left: 60,
             child: IconButton(icon: viewIcon, onPressed: () => switchView())),
         Positioned(
-            top: 12,
+            // top: 12,
             left: 120,
-            child: Text(
-              scheduleType == 'By group' ? groupName : '',
-              style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
+            child: FlatButton(
+              child: Text(
+                scheduleType == 'By group' ? groupName : getStudentName(),
+                style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
+              ),
+              onPressed: () => openSettingsPage(context),
             ))
       ],
     );
@@ -128,6 +149,15 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
+    Widget getMainBody() {
+      if (scheduleType != null)
+        return mainBody;
+      else if (isSettingsLoaded)
+        return firstLaunchBody;
+      else
+        return Center(child: CircularProgressIndicator());
+    }
+
     return WillPopScope(
       onWillPop: () async {
         SystemNavigator.pop();
@@ -137,7 +167,7 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           key: _drawerKey,
           drawer: HomeDrawer(),
-          body: scheduleType != null ? mainBody : firstLaunchBody,
+          body: getMainBody(),
         ),
       ),
     );
@@ -163,9 +193,9 @@ class MyCalendar extends StatelessWidget {
       dataSource: events,
       onTap: (CalendarTapDetails details) => openSubjectInfo(details),
       firstDayOfWeek: 1,
-      appointmentTimeTextFormat: 'Hm',
+      appointmentTimeTextFormat: 'HH:mm',
       timeSlotViewSettings: TimeSlotViewSettings(
-        timeFormat: 'Hm',
+        timeFormat: 'HH:mm',
         startHour: 8,
         endHour: 23,
         timeInterval: Duration(minutes: 30),
@@ -177,9 +207,8 @@ class MyCalendar extends StatelessWidget {
       ),
       initialDisplayDate: DateTime.now(),
       todayHighlightColor: HexColor.fromHex('#1b5c94'),
-      monthViewSettings: MonthViewSettings(),
       scheduleViewSettings: ScheduleViewSettings(
-        appointmentTextStyle: mainStyle,
+        appointmentTextStyle: mainStyle.copyWith(),
         dayHeaderSettings: DayHeaderSettings(dateTextStyle: dateStyle),
         hideEmptyScheduleWeek: true,
         monthHeaderSettings: MonthHeaderSettings(
