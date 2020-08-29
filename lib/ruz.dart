@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -16,17 +17,21 @@ Future<List> getStudentNameSuggestion(String name) async {
   return json.decode(response.body);
 }
 
-Future<List> getGroupSchedule({groupId, startDate, endDate, lng = 1}) async {
+Future<List> getSchedule(
+    {@required String type, ruzId, startDate, endDate, lng = 1}) async {
   final String baseUrl = 'ruz.hse.ru';
-
-  Map<String, String> qParams = {
-    'start': '$startDate', // yyyy.mm.dd
-    'finish': '$endDate', // yyyy.mm.dd
-    'lng': '$lng', // 1 - RU, 2 - EN
-  };
-  var uri = Uri.https(baseUrl, '/api/schedule/group/$groupId', qParams);
-  var response = await http.get(uri);
-  return json.decode(response.body);
+  if (ruzId != '') {
+    Map<String, String> qParams = {
+      'start': '$startDate', // yyyy.mm.dd
+      'finish': '$endDate', // yyyy.mm.dd
+      'lng': '$lng', // 1 - RU, 2 - EN
+    };
+    var uri = Uri.https(baseUrl, '/api/schedule/$type/$ruzId', qParams);
+    print(uri);
+    var response = await http.get(uri);
+    return json.decode(response.body);
+  } else
+    return [];
 }
 
 Future getSubjectURL(disciplineinplan) async {
@@ -36,9 +41,10 @@ Future getSubjectURL(disciplineinplan) async {
   return json.decode(resp.body);
 }
 
-Future<List<Appointment>> getAppointments({groupId, startDate, endDate}) async {
-  List groupSchedule = await getGroupSchedule(
-      groupId: groupId, startDate: startDate, endDate: endDate);
+Future<List<Appointment>> getAppointmentsByGroup(
+    {@required String type, ruzId, startDate, endDate}) async {
+  List groupSchedule = await getSchedule(
+      type: type, ruzId: ruzId, startDate: startDate, endDate: endDate);
 
   List<Appointment> mySchedule = List.generate(groupSchedule.length, (index) {
     var date = groupSchedule[index]['date'];
@@ -72,4 +78,12 @@ Future<List<Appointment>> getAppointments({groupId, startDate, endDate}) async {
         notes: notesEnc);
   });
   return mySchedule;
+}
+
+Future<List<Appointment>> getAppointmentsByName(
+  studentId,
+  startDate,
+  endDates,
+) async {
+  return null;
 }

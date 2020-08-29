@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ruz/HexColor.dart';
 import 'package:ruz/constants.dart';
 import 'package:ruz/pages/search_group.dart';
 import 'search_student.dart';
@@ -18,12 +17,12 @@ class _SettingsPageState extends State<SettingsPage> {
   String selectedStudentName = '';
   String selectedStudentId = '';
 
-  static const scheduleType = <String>['By group', 'By name'];
+  static const scheduleType = <String>['group', 'name'];
   static String selectedType;
 
   List<DropdownMenuItem<String>> menuItems = scheduleType
       .map((String value) => DropdownMenuItem(
-            child: Text(value, style: settingsTextStyle),
+            child: Text('By $value', style: settingsTextStyle),
             value: value,
           ))
       .toList();
@@ -35,7 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
     // clearSettigns();
     getSettings().then((res) {
       setState(() {
-        selectedType = res['selectedType'] ?? 'By group';
+        selectedType = res['selectedType'] ?? 'group';
         selectedGroupName = res['selectedGroupName'] ?? 'Find your group';
         selectedGroupId = res['selectedGroupId'] ?? '';
         selectedStudentName = res['selectedStudentName'] ?? 'Find your name';
@@ -113,7 +112,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget getSettingsWidget() {
-    if (selectedType == 'By group') {
+    if (selectedType == 'group') {
       return Row(
         children: <Widget>[
           Text('Group: ', style: settingsTextStyle),

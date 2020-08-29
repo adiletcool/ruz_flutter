@@ -38,12 +38,19 @@ class SubjectPage extends StatelessWidget {
                       Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('$lessonType, ауд. $auditorium',
-                                style: TextStyle(
-                                  color: getAppointmentColor(lessonType),
-                                  fontSize: 18,
-                                )),
-                            Text(date),
+                            Flexible(
+                              flex: 7,
+                              child: Text('$lessonType, ауд. $auditorium',
+                                  maxLines: 2,
+                                  style: TextStyle(
+                                    color: getAppointmentColor(lessonType),
+                                    fontSize: 18,
+                                  )),
+                            ),
+                            Flexible(
+                              flex: 2,
+                              child: Text(date),
+                            ),
                           ]),
                       SizedBox(height: 10),
                       Text(discipline,
@@ -86,10 +93,13 @@ class SubjectPage extends StatelessWidget {
                         children: <Widget>[
                           Spacer(),
                           InkWell(
-                            child: Text('О дисциплине',
-                                style: settingsMidRowStyle.copyWith(
-                                  color: Colors.blueAccent,
-                                )),
+                            child: Container(
+                              padding: EdgeInsets.all(8),
+                              child: Text('О дисциплине',
+                                  style: settingsMidRowStyle.copyWith(
+                                    color: Colors.blueAccent,
+                                  )),
+                            ),
                             onTap: () async {
                               var resHashMap =
                                   await getSubjectURL(disciplineId);

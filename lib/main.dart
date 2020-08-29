@@ -1,21 +1,21 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'constants.dart';
+import 'ruz.dart';
+import 'pages/settings.dart';
+import 'pages/search_group.dart';
+import 'pages/search_student.dart';
+import 'pages/subject_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ruz/HexColor.dart';
 import 'package:ruz/pages/settings.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import 'HexColor.dart';
-import 'constants.dart';
 import 'package:syncfusion_flutter_core/core.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'pages/subject_page.dart';
-import 'ruz.dart';
-import 'pages/search_group.dart';
-import 'pages/search_student.dart';
-import 'pages/settings.dart';
-import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
   SyncfusionLicense.registerLicense(licenseKey);
@@ -69,14 +69,17 @@ class _HomePageState extends State<HomePage> {
         studentId = res['selectedStudentId'];
         isSettingsLoaded = true;
       });
-      // check schedule Type > return schedule according to groupId/studentId
-      if (groupId != null) {
+
+      var ruzId = scheduleType == 'group' ? groupId : studentId;
+
+      if (ruzId != null) {
         DateFormat formatter = DateFormat('yyyy.MM.dd');
         DateTime now = DateTime.now();
-        getAppointments(
-          groupId: groupId, // read from file
+        getAppointmentsByGroup(
+          type: scheduleType == 'group' ? scheduleType : 'student',
+          ruzId: ruzId, // read from file
           startDate: formatter.format(now.subtract(Duration(days: 2))),
-          endDate: formatter.format(now.add(Duration(days: 14))),
+          endDate: formatter.format(now.add(Duration(days: 21))),
         ).then((value) => setState(() => events = _DataSource(value)));
       } else
         setState(() => events = _DataSource([]));
@@ -94,8 +97,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void openSubjectInfo(CalendarTapDetails details) {
-    /* открыть окно с иформацией о предмете (название, время, адрес,
-     препод, аудитория) */
     List<dynamic> res = details.appointments;
     if (res != null) {
       String notesEncoded = res[0].notes;
@@ -110,8 +111,10 @@ class _HomePageState extends State<HomePage> {
   String getStudentName() {
     if (studentName == 'Find your name')
       return 'Set name';
+    else if (studentName != '')
+      return studentName.split(' ')[1];
     else
-      return studentName;
+      return studentName; // ''
   }
 
   @override
@@ -134,7 +137,7 @@ class _HomePageState extends State<HomePage> {
             left: 120,
             child: FlatButton(
               child: Text(
-                scheduleType == 'By group' ? groupName : getStudentName(),
+                scheduleType == 'group' ? groupName : getStudentName(),
                 style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
               ),
               onPressed: () => openSettingsPage(context),
@@ -160,7 +163,10 @@ class _HomePageState extends State<HomePage> {
 
     return WillPopScope(
       onWillPop: () async {
-        SystemNavigator.pop();
+        if (_drawerKey.currentState.isDrawerOpen)
+          Navigator.pop(context);
+        else
+          SystemNavigator.pop();
         return;
       },
       child: SafeArea(
@@ -188,6 +194,7 @@ class MyCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DateTime now = DateTime.now();
     return SfCalendar(
       view: viewType,
       dataSource: events,
@@ -205,7 +212,7 @@ class MyCalendar extends StatelessWidget {
         dateTextStyle: dateTextStyle,
         dayTextStyle: dateTextStyle,
       ),
-      initialDisplayDate: DateTime.now(),
+      initialDisplayDate: DateTime(now.year, now.month, now.day, 8, 0),
       todayHighlightColor: HexColor.fromHex('#1b5c94'),
       scheduleViewSettings: ScheduleViewSettings(
         appointmentTextStyle: mainStyle.copyWith(),
@@ -274,7 +281,7 @@ class HomeDrawer extends StatelessWidget {
                     Icon(Icons.info_outline, size: 18, color: Colors.white),
                 title: Text('Info',
                     style: drawerTextStyle.copyWith(fontSize: 19, height: .7)),
-                onTap: () {},
+                onTap: () => showInfoDialog(context),
               ),
             ],
           ),
@@ -282,6 +289,34 @@ class HomeDrawer extends StatelessWidget {
       ),
     );
   }
+}
+
+void showInfoDialog(BuildContext context) {
+  Navigator.pop(context);
+  showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.all(0),
+          content: InkWell(
+            child: Container(
+              padding: EdgeInsets.all(8),
+              child: ListTile(
+                leading: SvgPicture.asset(
+                  'assets/icons/logo_vk_outline.svg',
+                  width: 30,
+                ),
+                title: Text('Abiraev Adilet',
+                    style: settingsMidRowStyle.copyWith(
+                      fontSize: 22,
+                      color: Colors.blueAccent,
+                    )),
+              ),
+            ),
+            onTap: () async => launch('https://vk.com/adilet_abiraev'),
+          ),
+        );
+      });
 }
 
 void openSettingsPage(BuildContext context) {
