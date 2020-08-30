@@ -18,6 +18,9 @@ class SubjectPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String lessonPlace = '$lessonType, ';
+    lessonPlace += auditorium == 'Удалённо' ? auditorium : 'ауд. $auditorium';
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -40,7 +43,7 @@ class SubjectPage extends StatelessWidget {
                           children: [
                             Flexible(
                               flex: 7,
-                              child: Text('$lessonType, ауд. $auditorium',
+                              child: Text(lessonPlace,
                                   maxLines: 2,
                                   style: TextStyle(
                                     color: getAppointmentColor(lessonType),

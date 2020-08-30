@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ruz/constants.dart';
-import 'package:ruz/pages/search_group.dart';
-import 'search_student.dart';
+import 'search.dart';
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key key}) : super(key: key);
@@ -18,7 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String selectedStudentId = '';
 
   static const scheduleType = <String>['group', 'name'];
-  static String selectedType;
+  String selectedType = 'group'; // by default
 
   List<DropdownMenuItem<String>> menuItems = scheduleType
       .map((String value) => DropdownMenuItem(
@@ -112,73 +111,56 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget getSettingsWidget() {
-    if (selectedType == 'group') {
-      return Row(
-        children: <Widget>[
-          Text('Group: ', style: settingsTextStyle),
-          Spacer(flex: 2),
-          Expanded(
-              flex: 3,
-              child: ListTile(
-                title: Text(selectedGroupName,
-                    maxLines: 1,
-                    style: settingsTextStyle.copyWith(
-                      decoration: TextDecoration.underline,
-                    )),
-                trailing: Icon(Icons.edit, color: Colors.white, size: 18),
-                contentPadding: setLeftPaddingForGroup(),
-                onTap: () async {
-                  Group selectedGroup = await showSearch(
-                    context: context,
-                    delegate: GroupSearch(BlocProvider.of<GroupBloc>(context)),
-                  );
-
-                  if (selectedGroup != null) {
-                    setState(() {
-                      selectedGroupName = selectedGroup.name;
-                      selectedGroupId = selectedGroup.id;
-                    });
-                    _saveSettings();
-                  }
-                },
-              )),
-        ],
-      );
-    } else {
-      return Row(
-        children: <Widget>[
-          Text('Name: ', style: settingsTextStyle),
-          Spacer(flex: 2),
-          Expanded(
-              flex: 3,
-              child: ListTile(
-                title: Text(
-                  selectedStudentName,
-                  maxLines: 1,
-                  style: settingsTextStyle.copyWith(
-                      decoration: TextDecoration.underline),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Flexible(
+          flex: 3,
+          child: Text(
+            selectedType.capitalize() + ":",
+            style: settingsTextStyle,
+            overflow: TextOverflow.fade,
+          ),
+        ),
+        Flexible(
+            flex: 7,
+            child: ListTile(
+              title: Text(
+                selectedType == 'group'
+                    ? selectedGroupName
+                    : selectedStudentName,
+                maxLines: 2,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: settingsTextStyle.copyWith(
+                  decoration: TextDecoration.underline,
                 ),
-                trailing: Icon(Icons.edit, color: Colors.white, size: 18),
-                contentPadding: EdgeInsets.only(left: 0),
-                onTap: () async {
-                  Student selectedName = await showSearch(
-                    context: context,
-                    delegate:
-                        StudentSearch(BlocProvider.of<StudentBloc>(context)),
-                  );
+              ),
+              trailing: Icon(Icons.edit, color: Colors.white, size: 18),
+              contentPadding: setLeftPaddingForGroup(),
+              onTap: () async {
+                Obj selectedValue = await showSearch(
+                  context: context,
+                  delegate: ObjSearch(
+                      BlocProvider.of<ObjBloc>(context), selectedType),
+                );
 
-                  if (selectedName != null) {
-                    setState(() {
-                      selectedStudentName = selectedName.name;
-                      selectedStudentId = selectedName.id;
-                    });
-                    _saveSettings();
-                  }
-                },
-              )),
-        ],
-      );
-    }
+                if (selectedValue != null) {
+                  setState(() {
+                    if (selectedType == 'group') {
+                      selectedGroupName = selectedValue.name;
+                      selectedGroupId = selectedValue.id;
+                    } else {
+                      selectedStudentName = selectedValue.name;
+                      selectedStudentId = selectedValue.id;
+                    }
+                  });
+                  _saveSettings();
+                }
+              },
+            )),
+      ],
+    );
   }
 
   EdgeInsets setLeftPaddingForGroup() {

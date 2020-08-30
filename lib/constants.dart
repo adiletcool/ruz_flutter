@@ -77,3 +77,9 @@ Color getAppointmentColor(lessonType) {
       ? HexColor.fromHex('#346E86')
       : HexColor.fromHex('#2b2d42');
 }
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${this.substring(1)}";
+  }
+}

@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'constants.dart';
+import 'pages/search.dart';
 import 'ruz.dart';
 import 'pages/settings.dart';
-import 'pages/search_group.dart';
-import 'pages/search_student.dart';
 import 'pages/subject_page.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -298,22 +296,46 @@ void showInfoDialog(BuildContext context) {
       builder: (BuildContext context) {
         return AlertDialog(
           contentPadding: EdgeInsets.all(0),
-          content: InkWell(
-            child: Container(
-              padding: EdgeInsets.all(8),
-              child: ListTile(
-                leading: SvgPicture.asset(
-                  'assets/icons/logo_vk_outline.svg',
-                  width: 30,
+          content: Container(
+            padding: EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () => launch('https://vk.com/adilet_abiraev'),
+                  child: ListTile(
+                    leading: SvgPicture.asset(
+                      'assets/icons/logo_vk_outline.svg',
+                      width: 30,
+                    ),
+                    title: Text('Abiraev Adilet',
+                        style: settingsMidRowStyle.copyWith(
+                          fontSize: 22,
+                          color: Colors.blueAccent,
+                        )),
+                  ),
                 ),
-                title: Text('Abiraev Adilet',
-                    style: settingsMidRowStyle.copyWith(
-                      fontSize: 22,
-                      color: Colors.blueAccent,
-                    )),
-              ),
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.only(left: 22, bottom: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text('App icon: ', style: TextStyle(fontSize: 18)),
+                      InkWell(
+                        onTap: () => launch('https://icons8.com'),
+                        child: Text('icons8',
+                            style: settingsMidRowStyle.copyWith(
+                              fontSize: 18,
+                              color: Colors.blueAccent,
+                            )),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            onTap: () async => launch('https://vk.com/adilet_abiraev'),
           ),
         );
       });
@@ -323,13 +345,8 @@ void openSettingsPage(BuildContext context) {
   Navigator.push(
     context,
     MaterialPageRoute(builder: (context) {
-      return MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => GroupBloc()),
-          BlocProvider(create: (_) => StudentBloc()),
-        ],
-        child: SettingsPage(),
-      );
+      // if multiple Blocs then use MultiBlocProvider(providers: [], child: ...)
+      return BlocProvider(create: (_) => ObjBloc(), child: SettingsPage());
     }),
   );
 }
