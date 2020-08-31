@@ -73,8 +73,8 @@ class _HomePageState extends State<HomePage> {
       if (ruzId != null) {
         DateFormat formatter = DateFormat('yyyy.MM.dd');
         DateTime now = DateTime.now();
-        getAppointmentsByGroup(
-          type: scheduleType == 'group' ? scheduleType : 'student',
+        getAppointments(
+          type: scheduleType,
           ruzId: ruzId, // read from file
           startDate: formatter.format(now.subtract(Duration(days: 2))),
           endDate: formatter.format(now.add(Duration(days: 21))),

@@ -5,14 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'constants.dart';
 
-Future<List> getGroupSuggestion(String group) async {
-  final String url = 'https://ruz.hse.ru/api/search?term=$group&type=group';
-  final response = await http.Client().get(url);
-  return json.decode(response.body);
-}
-
-Future<List> getStudentNameSuggestion(String name) async {
-  final String url = 'https://ruz.hse.ru/api/search?term=$name&type=student';
+Future<List> getSearchSuggestion({String query, String type}) async {
+  final String url = 'https://ruz.hse.ru/api/search?term=$query&type=$type';
   final response = await http.Client().get(url);
   return json.decode(response.body);
 }
@@ -41,7 +35,7 @@ Future getSubjectURL(disciplineinplan) async {
   return json.decode(resp.body);
 }
 
-Future<List<Appointment>> getAppointmentsByGroup(
+Future<List<Appointment>> getAppointments(
     {@required String type, ruzId, startDate, endDate}) async {
   List groupSchedule = await getSchedule(
       type: type, ruzId: ruzId, startDate: startDate, endDate: endDate);
@@ -78,12 +72,4 @@ Future<List<Appointment>> getAppointmentsByGroup(
         notes: notesEnc);
   });
   return mySchedule;
-}
-
-Future<List<Appointment>> getAppointmentsByName(
-  studentId,
-  startDate,
-  endDates,
-) async {
-  return null;
 }
