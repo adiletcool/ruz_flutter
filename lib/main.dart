@@ -364,6 +364,7 @@ void showInfoDialog(BuildContext context) {
                         )),
                   ),
                 ),
+                Divider(color: Colors.black87),
                 SizedBox(height: 10),
                 Container(
                   padding: EdgeInsets.only(left: 22, bottom: 10),

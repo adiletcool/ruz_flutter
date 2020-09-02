@@ -63,7 +63,7 @@ class SubjectPage extends StatelessWidget {
                               fontSize: 20, fontWeight: FontWeight.w600)),
                       Divider(thickness: 1.5, color: Colors.black, height: 30),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
                           Flexible(
                             flex: 2,

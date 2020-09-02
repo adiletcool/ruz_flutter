@@ -85,7 +85,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         Text('Schedule: ', style: settingsTextStyle),
                         Spacer(),
                         DropdownButton(
-                          dropdownColor: Colors.grey,
+                          dropdownColor: HexColor.fromHex('#FF37474f'),
                           elevation: 1,
                           items: menuItems,
                           onChanged: (String newValue) {
@@ -99,6 +99,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       Divider(color: Colors.white),
                       SizedBox(height: 20),
                       getSettingsWidget(),
+                      SizedBox(height: 120),
+                      FlatButton(
+                        color: Colors.blueGrey.withOpacity(.25),
+                        child: Text('OK', style: settingsTextStyle),
+                        onPressed: () => goBackHome(),
+                      )
                     ],
                   ),
                 ),
