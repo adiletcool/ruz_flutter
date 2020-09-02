@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:intl/intl.dart';
 import 'constants.dart';
 import 'pages/search.dart';
@@ -53,7 +54,43 @@ class _HomePageState extends State<HomePage> {
   String groupName = '';
   String studentName = '';
   String studentId;
-  bool isSettingsLoaded = false;
+  String ruzId;
+  bool isScheduleLoaded = false;
+  bool isInternetConnError = false;
+
+  void _uploadSchedule() {
+    if (ruzId != null) {
+      DateFormat formatter = DateFormat('yyyy.MM.dd');
+      DateTime now = DateTime.now();
+      getSchedule(
+        type: scheduleType,
+        ruzId: ruzId,
+        startDate: formatter.format(now.subtract(Duration(days: 2))),
+        endDate: formatter.format(now.add(Duration(days: 21))),
+      ).then((scheduleJson) {
+        if (scheduleJson[0].runtimeType == SocketException) {
+          print('Internet Error');
+          setState(() {
+            isInternetConnError = true;
+            events = _DataSource([]);
+          });
+        } else {
+          print('Got Appointments');
+          getAppointments(scheduleJson: scheduleJson)
+              .then((value) => setState(() {
+                    events = _DataSource(value);
+                    isScheduleLoaded = true;
+                    isInternetConnError = false;
+                  }));
+        }
+      });
+    } else
+      setState(() {
+        events = _DataSource([]);
+        isScheduleLoaded = true;
+        isInternetConnError = false;
+      });
+  }
 
   @override
   void initState() {
@@ -65,22 +102,9 @@ class _HomePageState extends State<HomePage> {
         groupName = res['selectedGroupName'] ??= '';
         studentName = res['selectedStudentName'] ??= '';
         studentId = res['selectedStudentId'];
-        isSettingsLoaded = true;
+        ruzId = scheduleType == 'group' ? groupId : studentId;
       });
-
-      var ruzId = scheduleType == 'group' ? groupId : studentId;
-
-      if (ruzId != null) {
-        DateFormat formatter = DateFormat('yyyy.MM.dd');
-        DateTime now = DateTime.now();
-        getAppointments(
-          type: scheduleType,
-          ruzId: ruzId, // read from file
-          startDate: formatter.format(now.subtract(Duration(days: 2))),
-          endDate: formatter.format(now.add(Duration(days: 21))),
-        ).then((value) => setState(() => events = _DataSource(value)));
-      } else
-        setState(() => events = _DataSource([]));
+      _uploadSchedule();
     });
   }
 
@@ -115,9 +139,8 @@ class _HomePageState extends State<HomePage> {
       return studentName; // ''
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget mainBody = Stack(
+  Widget getMainWidget(BuildContext context) {
+    return Stack(
       alignment: AlignmentDirectional.topStart,
       children: <Widget>[
         MyCalendar(
@@ -142,23 +165,48 @@ class _HomePageState extends State<HomePage> {
             ))
       ],
     );
+  }
 
-    Widget firstLaunchBody = Center(
+  Widget getFirstLaunchWidget(BuildContext context) {
+    return Center(
       child: OutlineButton(
         child: Text('Set schedule settings', style: dateStyle),
         onPressed: () => openSettingsPage(context),
       ),
     );
+  }
 
-    Widget getMainBody() {
-      if (scheduleType != null)
-        return mainBody;
-      else if (isSettingsLoaded)
-        return firstLaunchBody;
+  Widget internetConnectionErrorWidget() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Center(child: Text('Internet connection error.', style: dateStyle)),
+        SizedBox(height: 15),
+        FlatButton(
+            color: Colors.blueGrey,
+            child: Text('Retry', style: settingsTextStyle),
+            onPressed: () {
+              _uploadSchedule();
+            })
+      ],
+    );
+  }
+
+  Widget getMainBody() {
+    if (!isInternetConnError) {
+      if (scheduleType != null) {
+        return getMainWidget(context);
+      } else if (isScheduleLoaded)
+        return getFirstLaunchWidget(context);
       else
         return Center(child: CircularProgressIndicator());
+    } else {
+      return internetConnectionErrorWidget();
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
         if (_drawerKey.currentState.isDrawerOpen)

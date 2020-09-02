@@ -1,9 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'constants.dart';
+
+Future getSubjectURL(disciplineinplan) async {
+  var url =
+      'https://www.hse.ru/api/timetable/proposal-items?ptm=$disciplineinplan&locale=ru';
+  var resp = await http.get(url);
+  return json.decode(resp.body);
+}
 
 Future<List> getSearchSuggestion({String query, String type}) async {
   final String url = 'https://ruz.hse.ru/api/search?term=$query&type=$type';
@@ -15,42 +23,35 @@ Future<List> getSchedule(
     {@required String type, ruzId, startDate, endDate, lng = 1}) async {
   final String baseUrl = 'ruz.hse.ru';
   if (ruzId != '') {
-    Map<String, String> qParams = {
-      'start': '$startDate', // yyyy.mm.dd
-      'finish': '$endDate', // yyyy.mm.dd
-      'lng': '$lng', // 1 - RU, 2 - EN
-    };
-    var uri = Uri.https(baseUrl, '/api/schedule/$type/$ruzId', qParams);
-    print(uri);
-    var response = await http.get(uri);
-    return json.decode(response.body);
+    try {
+      Map<String, String> qParams = {
+        'start': '$startDate', // yyyy.mm.dd
+        'finish': '$endDate', // yyyy.mm.dd
+        'lng': '$lng', // 1 - RU, 2 - EN
+      };
+      var uri = Uri.https(baseUrl, '/api/schedule/$type/$ruzId', qParams);
+      print('Request: $uri');
+      var response = await http.get(uri);
+      return json.decode(response.body);
+    } on SocketException catch (error) {
+      return [error];
+    }
   } else
     return [];
 }
 
-Future getSubjectURL(disciplineinplan) async {
-  var url =
-      'https://www.hse.ru/api/timetable/proposal-items?ptm=$disciplineinplan&locale=ru';
-  var resp = await http.get(url);
-  return json.decode(resp.body);
-}
-
-Future<List<Appointment>> getAppointments(
-    {@required String type, ruzId, startDate, endDate}) async {
-  List groupSchedule = await getSchedule(
-      type: type, ruzId: ruzId, startDate: startDate, endDate: endDate);
-
-  List<Appointment> mySchedule = List.generate(groupSchedule.length, (index) {
-    var date = groupSchedule[index]['date'];
-    var beginTime = groupSchedule[index]['beginLesson'];
-    var endTime = groupSchedule[index]['endLesson'];
-    String discipline = groupSchedule[index]['discipline'];
-    String lessonType = groupSchedule[index]['kindOfWork'];
-    var auditorium = groupSchedule[index]['auditorium'];
-    String location = groupSchedule[index]['building'];
-    String teacher = groupSchedule[index]['lecturer'];
+Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
+  List<Appointment> mySchedule = List.generate(scheduleJson.length, (index) {
+    var date = scheduleJson[index]['date'];
+    var beginTime = scheduleJson[index]['beginLesson'];
+    var endTime = scheduleJson[index]['endLesson'];
+    String discipline = scheduleJson[index]['discipline'];
+    String lessonType = scheduleJson[index]['kindOfWork'];
+    var auditorium = scheduleJson[index]['auditorium'];
+    String location = scheduleJson[index]['building'];
+    String teacher = scheduleJson[index]['lecturer'];
     var appColor = getAppointmentColor(lessonType);
-    String disciplineId = groupSchedule[index]['disciplineinplan'];
+    String disciplineId = scheduleJson[index]['disciplineinplan'];
 
     String notesEnc = json.encode({
       'date': date,
