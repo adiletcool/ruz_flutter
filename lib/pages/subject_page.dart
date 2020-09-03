@@ -128,11 +128,13 @@ Widget getMainBody({
       ListTile(
         contentPadding: EdgeInsets.all(0),
         onTap: () => launch(onlineUrl),
-        leading: Icon(Icons.link),
-        title: Text(
-          onlineUrl,
-          overflow: TextOverflow.ellipsis,
-        ),
+        leading: Icon(Icons.link, color: Colors.black54),
+        title: Text(onlineUrl,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: settingsMidRowStyle.copyWith(
+              color: Colors.blueAccent,
+            )),
       )
     ]);
   }

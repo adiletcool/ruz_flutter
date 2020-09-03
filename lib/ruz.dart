@@ -41,7 +41,6 @@ Future<List> getSchedule(
 }
 
 Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
-  print(scheduleJson[0]);
   List<Appointment> mySchedule = List.generate(scheduleJson.length, (index) {
     var date = scheduleJson[index]['date'];
     var beginTime = scheduleJson[index]['beginLesson'];

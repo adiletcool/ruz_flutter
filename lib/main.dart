@@ -125,11 +125,21 @@ class _HomePageState extends State<HomePage> {
     if (res != null) {
       String notesEncoded = res[0].notes;
       var notesDecoded = json.decode(notesEncoded);
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => SubjectPage(notes: notesDecoded)));
+      Navigator.of(context).push(_openSubjectRoute(notesDecoded));
     }
+  }
+
+  Route _openSubjectRoute(notesDecoded) {
+    return PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            SubjectPage(notes: notesDecoded),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var tween = Tween(begin: const Offset(1, 1), end: Offset.zero)
+              .chain(CurveTween(curve: Curves.ease));
+
+          return SlideTransition(
+              position: animation.drive(tween), child: child);
+        });
   }
 
   String getStudentName() {
@@ -163,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                 scheduleType == 'group' ? groupName : getStudentName(),
                 style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
               ),
-              onPressed: () => openSettingsPage(context),
+              onPressed: () => openSettingsRoute(context),
             ))
       ],
     );
@@ -173,7 +183,7 @@ class _HomePageState extends State<HomePage> {
     return Center(
       child: OutlineButton(
         child: Text('Set schedule settings', style: dateStyle),
-        onPressed: () => openSettingsPage(context),
+        onPressed: () => openSettingsRoute(context),
       ),
     );
   }
@@ -323,7 +333,7 @@ class HomeDrawer extends StatelessWidget {
                   title: Text('Settings',
                       style:
                           drawerTextStyle.copyWith(fontSize: 19, height: .7)),
-                  onTap: () => openSettingsPage(context)),
+                  onTap: () => openSettingsRoute(context)),
               ListTile(
                 leading:
                     Icon(Icons.info_outline, size: 18, color: Colors.white),
@@ -392,12 +402,14 @@ void showInfoDialog(BuildContext context) {
       });
 }
 
-void openSettingsPage(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) {
-      // if multiple Blocs then use MultiBlocProvider(providers: [], child: ...)
-      return BlocProvider(create: (_) => ObjBloc(), child: SettingsPage());
-    }),
-  );
+void openSettingsRoute(BuildContext context) {
+  Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          BlocProvider(create: (_) => ObjBloc(), child: SettingsPage()),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        var tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.ease));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      }));
 }
