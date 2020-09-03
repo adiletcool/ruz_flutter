@@ -41,6 +41,7 @@ Future<List> getSchedule(
 }
 
 Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
+  print(scheduleJson[0]);
   List<Appointment> mySchedule = List.generate(scheduleJson.length, (index) {
     var date = scheduleJson[index]['date'];
     var beginTime = scheduleJson[index]['beginLesson'];
@@ -52,6 +53,7 @@ Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
     String teacher = scheduleJson[index]['lecturer'];
     var appColor = getAppointmentColor(lessonType);
     String disciplineId = scheduleJson[index]['disciplineinplan'];
+    String onlineUrl = scheduleJson[index]['url1'];
 
     String notesEnc = json.encode({
       'date': date,
@@ -63,6 +65,7 @@ Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
       'location': location,
       'teacher': teacher,
       'disciplineId': disciplineId,
+      'url1': onlineUrl
     });
 
     return Appointment(

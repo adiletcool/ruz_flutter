@@ -68,21 +68,23 @@ class _HomePageState extends State<HomePage> {
         startDate: formatter.format(now.subtract(Duration(days: 2))),
         endDate: formatter.format(now.add(Duration(days: 21))),
       ).then((scheduleJson) {
-        if (scheduleJson[0].runtimeType == SocketException) {
-          print('Internet Error');
-          setState(() {
-            isInternetConnError = true;
-            events = _DataSource([]);
-          });
-        } else {
-          print('Got Appointments');
-          getAppointments(scheduleJson: scheduleJson)
-              .then((value) => setState(() {
-                    events = _DataSource(value);
-                    isScheduleLoaded = true;
-                    isInternetConnError = false;
-                  }));
+        if (scheduleJson.length > 0) {
+          if (scheduleJson[0].runtimeType == SocketException) {
+            print('Internet Error');
+            setState(() {
+              isInternetConnError = true;
+              events = _DataSource([]);
+            });
+            return;
+          }
         }
+        print('Got Appointments');
+        getAppointments(scheduleJson: scheduleJson)
+            .then((value) => setState(() {
+                  events = _DataSource(value);
+                  isScheduleLoaded = true;
+                  isInternetConnError = false;
+                }));
       });
     } else
       setState(() {

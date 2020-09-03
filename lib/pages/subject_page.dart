@@ -14,6 +14,7 @@ class SubjectPage extends StatelessWidget {
   String get location => notes['location'];
   String get teacher => notes['teacher'];
   String get disciplineId => notes['disciplineId'];
+  String get onlineUrl => notes['url1'];
   const SubjectPage({@required this.notes});
 
   @override
@@ -35,85 +36,17 @@ class SubjectPage extends StatelessWidget {
                 hasScrollBody: false,
                 child: Padding(
                   padding: EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              flex: 7,
-                              child: Text(lessonPlace,
-                                  maxLines: 2,
-                                  style: TextStyle(
-                                    color: getAppointmentColor(lessonType),
-                                    fontSize: 18,
-                                  )),
-                            ),
-                            Flexible(
-                              flex: 2,
-                              child: Text(date),
-                            ),
-                          ]),
-                      SizedBox(height: 10),
-                      Text(discipline,
-                          maxLines: 5,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w600)),
-                      Divider(thickness: 1.5, color: Colors.black, height: 30),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Flexible(
-                            flex: 2,
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  Text(
-                                    beginTime,
-                                    style: settingsMidRowStyle,
-                                  ),
-                                  Icon(Icons.keyboard_arrow_down, size: 25),
-                                  Text(endTime, style: settingsMidRowStyle),
-                                ]),
-                          ),
-                          Spacer(flex: 1),
-                          Flexible(
-                              flex: 9,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(teacher, style: settingsMidRowStyle),
-                                  SizedBox(height: 25),
-                                  Text(location, style: settingsMidRowStyle),
-                                ],
-                              ))
-                        ],
-                      ),
-                      Divider(color: Colors.black, height: 30),
-                      Row(
-                        children: <Widget>[
-                          Spacer(),
-                          InkWell(
-                            child: Container(
-                              padding: EdgeInsets.all(8),
-                              child: Text('О дисциплине',
-                                  style: settingsMidRowStyle.copyWith(
-                                    color: Colors.blueAccent,
-                                  )),
-                            ),
-                            onTap: () async {
-                              var resHashMap =
-                                  await getSubjectURL(disciplineId);
-                              Map<String, Map> res = Map.from(resHashMap);
-                              String url = res[res.keys.toList()[0]]['url'];
-                              launch(url);
-                            },
-                          ),
-                        ],
-                      )
-                    ],
+                  child: getMainBody(
+                    lessonPlace: lessonPlace,
+                    lessonType: lessonType,
+                    date: date,
+                    discipline: discipline,
+                    beginTime: beginTime,
+                    endTime: endTime,
+                    teacher: teacher,
+                    location: location,
+                    disciplineId: disciplineId,
+                    onlineUrl: onlineUrl,
                   ),
                 ))
           ],
@@ -121,4 +54,115 @@ class SubjectPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget getMainBody({
+  @required lessonPlace,
+  @required lessonType,
+  @required date,
+  @required discipline,
+  @required beginTime,
+  @required endTime,
+  @required teacher,
+  @required location,
+  @required disciplineId,
+  @required onlineUrl,
+}) {
+  var mainColumn = <Widget>[
+    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Flexible(
+        flex: 7,
+        child: Text(lessonPlace,
+            maxLines: 2,
+            style: TextStyle(
+              color: getAppointmentColor(lessonType),
+              fontSize: 18,
+            )),
+      ),
+      Flexible(
+        flex: 2,
+        child: Text(date),
+      ),
+    ]),
+    SizedBox(height: 10),
+    Text(discipline,
+        maxLines: 5,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+    Divider(thickness: 1.5, color: Colors.black, height: 30),
+    Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Flexible(
+          flex: 2,
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  beginTime,
+                  style: settingsMidRowStyle,
+                ),
+                Icon(Icons.keyboard_arrow_down, size: 25),
+                Text(endTime, style: settingsMidRowStyle),
+              ]),
+        ),
+        Spacer(flex: 1),
+        Flexible(
+            flex: 9,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(teacher, style: settingsMidRowStyle),
+                SizedBox(height: 25),
+                Text(location, style: settingsMidRowStyle),
+              ],
+            ))
+      ],
+    ),
+    SizedBox(height: 20),
+  ];
+
+  if (onlineUrl != null) {
+    mainColumn.addAll([
+      Divider(height: 0, color: Colors.black),
+      ListTile(
+        contentPadding: EdgeInsets.all(0),
+        onTap: () => launch(onlineUrl),
+        leading: Icon(Icons.link),
+        title: Text(
+          onlineUrl,
+          overflow: TextOverflow.ellipsis,
+        ),
+      )
+    ]);
+  }
+
+  mainColumn.addAll([
+    Divider(color: Colors.black, height: 20),
+    Row(
+      children: <Widget>[
+        Spacer(),
+        InkWell(
+          child: Container(
+            padding: EdgeInsets.all(8),
+            child: Text('О дисциплине',
+                style: settingsMidRowStyle.copyWith(
+                  color: Colors.blueAccent,
+                )),
+          ),
+          onTap: () async {
+            var resHashMap = await getSubjectURL(disciplineId);
+            Map<String, Map> res = Map.from(resHashMap);
+            String url = res[res.keys.toList()[0]]['url'];
+            launch(url);
+          },
+        ),
+      ],
+    ),
+  ]);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: mainColumn,
+  );
 }
