@@ -329,20 +329,22 @@ class HomeDrawer extends StatelessWidget {
                         context: context,
                         delegate:
                             ObjSearch(BlocProvider.of<ObjBloc>(context), type));
-                    openRoute(context,
-                        page: OtherSchedule(selectedValue, type));
+                    if (selectedValue != null)
+                      openRoute(context,
+                          page: OtherSchedule(selectedValue, type));
                   }),
               ListTile(
                 leading: HomeDrawerIcon.icon(MdiIcons.teach),
                 title: Text('Teachers', style: homeDrawerTextStyle),
                 onTap: () async {
                   String type = 'lecturer';
-
                   Obj selectedValue = await showSearch(
                       context: context,
                       delegate:
                           ObjSearch(BlocProvider.of<ObjBloc>(context), type));
-                  openRoute(context, page: OtherSchedule(selectedValue, type));
+                  if (selectedValue != null)
+                    openRoute(context,
+                        page: OtherSchedule(selectedValue, type));
                 },
               ),
               ListTile(

@@ -30,7 +30,7 @@ class ObjSearch extends SearchDelegate<Obj> {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: BackButtonIcon(),
-      onPressed: () => close(context, null),
+      onPressed: () => Navigator.pop(context),
     );
   }
 
