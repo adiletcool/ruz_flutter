@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 extension HexColor on Color {
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".
@@ -20,6 +21,12 @@ extension HexColor on Color {
       '${blue.toRadixString(16).padLeft(2, '0')}';
 }
 
+extension HomeDrawerIcon on Icon {
+  static Icon icon(IconData icon) {
+    return Icon(icon, color: Colors.white, size: 18);
+  }
+}
+
 String licenseKey =
     'NT8mJyc2IWhia31hfWN9Z2doYmF8YGJ8ampqanNiYmlmamlmanMDHmgyNzo/NicwPDw/YhM0PjI6P30wPD4=';
 TextStyle mainStyle = TextStyle(fontFamily: 'PTRootUI');
@@ -37,6 +44,8 @@ TextStyle settingsTextStyle = mainStyle.copyWith(
 TextStyle searchTextStyle =
     mainStyle.copyWith(fontSize: 18, color: Colors.black);
 TextStyle settingsMidRowStyle = mainStyle.copyWith(fontSize: 16);
+TextStyle homeDrawerTextStyle =
+    drawerTextStyle.copyWith(fontSize: 19, height: .7);
 
 void saveSettings(
   String selectedType,
@@ -73,6 +82,7 @@ Future<Map<String, String>> getSettings() async {
 }
 
 Color getAppointmentColor(lessonType) {
+  lessonType ??= '';
   return ['лекция', 'lecture'].contains(lessonType.toLowerCase())
       ? HexColor.fromHex('#346E86')
       : HexColor.fromHex('#2b2d42');
@@ -82,4 +92,15 @@ extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${this.substring(1)}";
   }
+}
+
+Map<String, Icon> searchIcons = {
+  'group': Icon(MdiIcons.accountGroup, color: Colors.black),
+  'name': Icon(MdiIcons.account, color: Colors.black),
+  'teacher': Icon(MdiIcons.account, color: Colors.black),
+  'auditorium': Icon(Icons.room, color: Colors.black),
+};
+
+void goBackHome(BuildContext context) {
+  Navigator.pushNamed(context, 'HomePage');
 }

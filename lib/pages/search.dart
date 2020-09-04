@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:ruz/constants.dart';
 
 import '../ruz.dart';
@@ -11,17 +10,18 @@ class Obj {
   // Group or Student
   final String name;
   final String id;
-  const Obj(this.name, this.id);
+  final String description;
+  const Obj(this.name, this.id, this.description);
 
   @override
-  String toString() => 'Obj(name: $name, id: $id)';
+  String toString() => 'Obj(name: $name, id: $id, description: $description)';
 }
 
 class ObjSearch extends SearchDelegate<Obj> {
-  final Bloc<ObjSearchEvent, ObjSearchState> groupBloc;
-  final String searchType; // group / student
+  final Bloc<ObjSearchEvent, ObjSearchState> objectBloc;
+  final String searchType; // group / name
 
-  ObjSearch(this.groupBloc, this.searchType);
+  ObjSearch(this.objectBloc, this.searchType);
 
   @override
   List<Widget> buildActions(BuildContext context) => null;
@@ -36,10 +36,10 @@ class ObjSearch extends SearchDelegate<Obj> {
 
   @override
   Widget buildResults(BuildContext context) {
-    groupBloc.add(ObjSearchEvent(query, searchType));
+    objectBloc.add(ObjSearchEvent(query, searchType));
 
     return BlocBuilder(
-        cubit: groupBloc,
+        cubit: objectBloc,
         builder: (context, state) {
           if (state.isLoading) {
             return Center(child: CircularProgressIndicator());
@@ -51,13 +51,11 @@ class ObjSearch extends SearchDelegate<Obj> {
           return ListView.builder(
             itemCount: state.objects.length,
             itemBuilder: (context, index) {
-              IconData leadingIcon = searchType == 'group'
-                  ? MdiIcons.accountGroup
-                  : MdiIcons.account;
-
               return ListTile(
-                leading: Icon(leadingIcon, color: Colors.black),
+                leading: searchIcons[searchType],
                 title: Text(state.objects[index].name, style: searchTextStyle),
+                subtitle: Text(state.objects[index].description,
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
                 onTap: () => close(context, state.objects[index]),
               );
             },
@@ -71,28 +69,28 @@ class ObjSearch extends SearchDelegate<Obj> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    if (((searchType == 'name') && (query.length >= 2)) ||
-        (searchType == 'group')) {
+    if ((searchType == 'name') && (query.length <= 2)) {
+      return Container();
+    } else {
       return FutureBuilder(
         future: _getSuggestions(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             List<Obj> res = List.generate(snapshot.data.length, (index) {
               return Obj(
-                snapshot.data[index]['label'],
-                snapshot.data[index]['id'],
-              );
+                  snapshot.data[index]['label'],
+                  snapshot.data[index]['id'],
+                  snapshot.data[index]['description']);
             });
 
             return ListView.builder(
               itemCount: res.length,
               itemBuilder: (context, index) {
-                IconData leadingIcon = searchType == 'group'
-                    ? MdiIcons.accountGroup
-                    : MdiIcons.account;
                 return ListTile(
-                  leading: Icon(leadingIcon, color: Colors.black),
+                  leading: searchIcons[searchType],
                   title: Text(res[index].name, style: searchTextStyle),
+                  subtitle: Text(res[index].description,
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
                   onTap: () => close(context, res[index]),
                 );
               },
@@ -104,8 +102,7 @@ class ObjSearch extends SearchDelegate<Obj> {
           }
         },
       );
-    } else
-      return Container();
+    }
   }
 }
 
@@ -159,7 +156,11 @@ class ObjBloc extends Bloc<ObjSearchEvent, ObjSearchState> {
     var suggestions = await getSearchSuggestion(query: query, type: searchType);
 
     List<Obj> res = List.generate(suggestions.length, (index) {
-      return Obj(suggestions[index]['label'], suggestions[index]['id']);
+      return Obj(
+        suggestions[index]['label'],
+        suggestions[index]['id'],
+        suggestions[index]['description'],
+      );
     });
 
     return res;

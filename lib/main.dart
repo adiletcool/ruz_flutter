@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:ruz/pages/search.dart';
 import 'constants.dart';
-import 'pages/search.dart';
+import 'pages/other_schedule.dart';
 import 'ruz.dart';
 import 'pages/settings.dart';
 import 'pages/subject_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ruz/pages/settings.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:syncfusion_flutter_core/core.dart';
@@ -24,14 +25,16 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage(),
-      theme: ThemeData(fontFamily: 'PTRootUI'),
-      routes: {
-        'HomePage': (context) => HomePage(),
-      },
-    );
+    return BlocProvider(
+        create: (_) => ObjBloc(),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: HomePage(),
+          theme: ThemeData(fontFamily: 'PTRootUI'),
+          routes: {
+            'HomePage': (context) => HomePage(),
+          },
+        ));
   }
 }
 
@@ -43,7 +46,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  _DataSource events;
+  DataSource events;
   GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
   bool isTable = false;
   Icon viewIcon = Icon(MdiIcons.viewWeekOutline);
@@ -73,7 +76,7 @@ class _HomePageState extends State<HomePage> {
             print('Internet Error');
             setState(() {
               isInternetConnError = true;
-              events = _DataSource([]);
+              events = DataSource([]);
             });
             return;
           }
@@ -81,14 +84,14 @@ class _HomePageState extends State<HomePage> {
         print('Got Appointments');
         getAppointments(scheduleJson: scheduleJson)
             .then((value) => setState(() {
-                  events = _DataSource(value);
+                  events = DataSource(value);
                   isScheduleLoaded = true;
                   isInternetConnError = false;
                 }));
       });
     } else
       setState(() {
-        events = _DataSource([]);
+        events = DataSource([]);
         isScheduleLoaded = true;
         isInternetConnError = false;
       });
@@ -173,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                 scheduleType == 'group' ? groupName : getStudentName(),
                 style: searchTextStyle.copyWith(fontWeight: FontWeight.w600),
               ),
-              onPressed: () => openSettingsRoute(context),
+              onPressed: () => openRoute(context, page: SettingsPage()),
             ))
       ],
     );
@@ -183,7 +186,7 @@ class _HomePageState extends State<HomePage> {
     return Center(
       child: OutlineButton(
         child: Text('Set schedule settings', style: dateStyle),
-        onPressed: () => openSettingsRoute(context),
+        onPressed: () => openRoute(context, page: SettingsPage()),
       ),
     );
   }
@@ -247,7 +250,7 @@ class MyCalendar extends StatelessWidget {
   }) : super(key: key);
 
   final CalendarView viewType;
-  final _DataSource events;
+  final DataSource events;
   final Function openSubjectInfo;
 
   @override
@@ -293,8 +296,8 @@ class MyCalendar extends StatelessWidget {
   }
 }
 
-class _DataSource extends CalendarDataSource {
-  _DataSource(List<Appointment> source) {
+class DataSource extends CalendarDataSource {
+  DataSource(List<Appointment> source) {
     appointments = source;
   }
 }
@@ -314,31 +317,47 @@ class HomeDrawer extends StatelessWidget {
             children: <Widget>[
               ListTile(
                 contentPadding: EdgeInsets.only(left: 20),
-                // leading: IconButton(
-                //   icon: Icon(Icons.menu, color: Colors.white),
-                //   onPressed: () => Navigator.pop(context),
-                // ),
                 title: Text('Schedule', style: drawerTextStyle),
               ),
               Divider(color: Colors.white, thickness: 1.2),
               ListTile(
-                leading: Icon(Icons.schedule, size: 18, color: Colors.white),
-                title: Text('Deadlines',
-                    style: drawerTextStyle.copyWith(fontSize: 19, height: .7)),
+                  leading: HomeDrawerIcon.icon(Icons.room),
+                  title: Text('Classrooms', style: homeDrawerTextStyle),
+                  onTap: () async {
+                    String type = 'auditorium';
+                    Obj selectedValue = await showSearch(
+                        context: context,
+                        delegate:
+                            ObjSearch(BlocProvider.of<ObjBloc>(context), type));
+                    openRoute(context,
+                        page: OtherSchedule(selectedValue, type));
+                  }),
+              ListTile(
+                leading: HomeDrawerIcon.icon(MdiIcons.teach),
+                title: Text('Teachers', style: homeDrawerTextStyle),
+                onTap: () async {
+                  String type = 'lecturer';
+
+                  Obj selectedValue = await showSearch(
+                      context: context,
+                      delegate:
+                          ObjSearch(BlocProvider.of<ObjBloc>(context), type));
+                  openRoute(context, page: OtherSchedule(selectedValue, type));
+                },
+              ),
+              ListTile(
+                leading: HomeDrawerIcon.icon(Icons.schedule),
+                title: Text('Deadlines', style: homeDrawerTextStyle),
                 onTap: () {},
               ),
               Divider(color: Colors.white),
               ListTile(
-                  leading: Icon(Icons.settings, size: 18, color: Colors.white),
-                  title: Text('Settings',
-                      style:
-                          drawerTextStyle.copyWith(fontSize: 19, height: .7)),
-                  onTap: () => openSettingsRoute(context)),
+                  leading: HomeDrawerIcon.icon(Icons.settings),
+                  title: Text('Settings', style: homeDrawerTextStyle),
+                  onTap: () => openRoute(context, page: SettingsPage())),
               ListTile(
-                leading:
-                    Icon(Icons.info_outline, size: 18, color: Colors.white),
-                title: Text('Info',
-                    style: drawerTextStyle.copyWith(fontSize: 19, height: .7)),
+                leading: HomeDrawerIcon.icon(Icons.info_outline),
+                title: Text('Info', style: homeDrawerTextStyle),
                 onTap: () => showInfoDialog(context),
               ),
             ],
@@ -402,10 +421,9 @@ void showInfoDialog(BuildContext context) {
       });
 }
 
-void openSettingsRoute(BuildContext context) {
+void openRoute(BuildContext context, {@required Widget page}) {
   Navigator.of(context).push(PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          BlocProvider(create: (_) => ObjBloc(), child: SettingsPage()),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         var tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
             .chain(CurveTween(curve: Curves.ease));

@@ -4,8 +4,6 @@ import 'package:ruz/constants.dart';
 import 'search.dart';
 
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key key}) : super(key: key);
-
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -52,7 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void goBackHome() {
+  void goBackHome(BuildContext context) {
     Navigator.pushNamed(context, 'HomePage');
   }
 
@@ -60,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        goBackHome();
+        goBackHome(context);
         return;
       },
       child: SafeArea(
@@ -72,10 +70,11 @@ class _SettingsPageState extends State<SettingsPage> {
               leading: IconButton(
                   icon:
                       Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
-                  onPressed: () => goBackHome())),
+                  onPressed: () => goBackHome(context))),
           body: CustomScrollView(
             slivers: <Widget>[
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 20, horizontal: 15),
                   color: HexColor.fromHex('#1A2026'),
@@ -99,11 +98,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       Divider(color: Colors.white),
                       SizedBox(height: 20),
                       getSettingsWidget(),
-                      SizedBox(height: 120),
+                      SizedBox(height: 80),
                       FlatButton(
                         color: Colors.blueGrey.withOpacity(.25),
                         child: Text('OK', style: settingsTextStyle),
-                        onPressed: () => goBackHome(),
+                        onPressed: () => goBackHome(context),
                       )
                     ],
                   ),
