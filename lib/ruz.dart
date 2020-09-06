@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future getSubjectURL(disciplineinplan) async {
   var url =
@@ -41,38 +42,49 @@ Future<List> getSchedule(
 }
 
 Future<List<Appointment>> getAppointments({@required List scheduleJson}) async {
+  List<String> saveData = [];
+
   List<Appointment> mySchedule = List.generate(scheduleJson.length, (index) {
     var date = scheduleJson[index]['date'];
-    var beginTime = scheduleJson[index]['beginLesson'];
-    var endTime = scheduleJson[index]['endLesson'];
+    var beginLesson = scheduleJson[index]['beginLesson'];
+    var endLesson = scheduleJson[index]['endLesson'];
     String discipline = scheduleJson[index]['discipline'];
-    String lessonType = scheduleJson[index]['kindOfWork'];
+    String kindOfWork = scheduleJson[index]['kindOfWork'];
     var auditorium = scheduleJson[index]['auditorium'];
-    String location = scheduleJson[index]['building'];
-    String teacher = scheduleJson[index]['lecturer'];
-    var appColor = getAppointmentColor(lessonType);
-    String disciplineId = scheduleJson[index]['disciplineinplan'];
-    String onlineUrl = scheduleJson[index]['url1'];
+    String building = scheduleJson[index]['building'];
+    String lecturer = scheduleJson[index]['lecturer'];
+    var appColor = getAppointmentColor(kindOfWork);
+    String disciplineinplan = scheduleJson[index]['disciplineinplan'];
+    String url1 = scheduleJson[index]['url1'];
+    String group = scheduleJson[index]['group'];
 
     String notesEnc = json.encode({
       'date': date,
-      'beginTime': beginTime,
-      'endTime': endTime,
+      'beginLesson': beginLesson,
+      'endLesson': endLesson,
       'discipline': discipline,
-      'lessonType': lessonType,
+      'kindOfWork': kindOfWork,
       'auditorium': auditorium,
-      'location': location,
-      'teacher': teacher,
-      'disciplineId': disciplineId,
-      'url1': onlineUrl
+      'building': building,
+      'lecturer': lecturer,
+      'disciplineinplan': disciplineinplan,
+      'url1': url1,
+      'group': group,
     });
+
+    saveData.add(notesEnc);
 
     return Appointment(
         color: appColor,
-        startTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $beginTime'),
-        endTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $endTime'),
-        subject: '$discipline, $lessonType',
+        startTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $beginLesson'),
+        endTime: DateFormat("yyyy.MM.dd HH:mm").parse('$date $endLesson'),
+        subject: '$discipline, $kindOfWork',
         notes: notesEnc);
   });
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList('offlineData', saveData); // do I need await here?
+  print('saved');
+
   return mySchedule;
 }

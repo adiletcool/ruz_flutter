@@ -43,7 +43,6 @@ class _OtherScheduleState extends State<OtherSchedule> {
       endDate: formatter.format(now.add(Duration(days: 21))),
     ).then((scheduleJson) {
       print('Got $name schedule');
-      print(scheduleJson);
       getAppointments(scheduleJson: scheduleJson).then((value) => setState(() {
             events = DataSource(value);
             isScheduleLoaded = true;

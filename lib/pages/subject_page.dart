@@ -6,20 +6,22 @@ import 'package:url_launcher/url_launcher.dart';
 class SubjectPage extends StatelessWidget {
   final notes;
   String get date => notes['date'];
-  String get beginTime => notes['beginTime'];
-  String get endTime => notes['endTime'];
+  String get beginLesson => notes['beginLesson'];
+  String get endLesson => notes['endLesson'];
   String get discipline => notes['discipline'];
-  String get lessonType => notes['lessonType'];
+  String get kindOfWork => notes['kindOfWork'];
   String get auditorium => notes['auditorium'];
-  String get location => notes['location'];
-  String get teacher => notes['teacher'];
-  String get disciplineId => notes['disciplineId'];
-  String get onlineUrl => notes['url1'];
+  String get building => notes['building'];
+  String get lecturer => notes['lecturer'];
+  String get disciplineinplan => notes['disciplineinplan'];
+  String get url1 => notes['url1'];
+  String get group => notes['group'];
+
   const SubjectPage({@required this.notes});
 
   @override
   Widget build(BuildContext context) {
-    String lessonPlace = '$lessonType, ';
+    String lessonPlace = '$kindOfWork, ';
     lessonPlace += auditorium == 'Удалённо' ? auditorium : 'ауд. $auditorium';
 
     return SafeArea(
@@ -38,15 +40,16 @@ class SubjectPage extends StatelessWidget {
                   padding: EdgeInsets.all(10),
                   child: getMainBody(
                     lessonPlace: lessonPlace,
-                    lessonType: lessonType,
+                    kindOfWork: kindOfWork,
                     date: date,
                     discipline: discipline,
-                    beginTime: beginTime,
-                    endTime: endTime,
-                    teacher: teacher,
-                    location: location,
-                    disciplineId: disciplineId,
-                    onlineUrl: onlineUrl,
+                    beginLesson: beginLesson,
+                    endLesson: endLesson,
+                    lecturer: lecturer,
+                    building: building,
+                    disciplineinplan: disciplineinplan,
+                    url1: url1,
+                    group: group,
                   ),
                 ))
           ],
@@ -58,24 +61,26 @@ class SubjectPage extends StatelessWidget {
 
 Widget getMainBody({
   @required lessonPlace,
-  @required lessonType,
+  @required kindOfWork,
   @required date,
   @required discipline,
-  @required beginTime,
-  @required endTime,
-  @required teacher,
-  @required location,
-  @required disciplineId,
-  @required onlineUrl,
+  @required beginLesson,
+  @required endLesson,
+  @required lecturer,
+  @required building,
+  @required disciplineinplan,
+  @required url1,
+  @required group,
 }) {
   var mainColumn = <Widget>[
     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       Flexible(
         flex: 7,
         child: Text(lessonPlace,
-            maxLines: 2,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: getAppointmentColor(lessonType),
+              color: getAppointmentColor(kindOfWork),
               fontSize: 18,
             )),
       ),
@@ -86,7 +91,7 @@ Widget getMainBody({
     ]),
     SizedBox(height: 10),
     Text(discipline,
-        maxLines: 5,
+        maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
     Divider(thickness: 1.5, color: Colors.black, height: 30),
@@ -99,11 +104,11 @@ Widget getMainBody({
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  beginTime,
+                  beginLesson,
                   style: settingsMidRowStyle,
                 ),
                 Icon(Icons.keyboard_arrow_down, size: 25),
-                Text(endTime, style: settingsMidRowStyle),
+                Text(endLesson, style: settingsMidRowStyle),
               ]),
         ),
         Spacer(flex: 1),
@@ -112,24 +117,33 @@ Widget getMainBody({
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(teacher, style: settingsMidRowStyle),
+                Text(lecturer, style: settingsMidRowStyle),
                 SizedBox(height: 25),
-                Text(location, style: settingsMidRowStyle),
+                Text(building, style: settingsMidRowStyle),
               ],
             ))
       ],
     ),
-    SizedBox(height: 20),
+    SizedBox(height: 10),
+    Divider(color: Colors.black, height: 15),
+    ListTile(
+      contentPadding: EdgeInsets.all(0),
+      leading: Icon(Icons.group, color: Colors.black54),
+      title: Text(group,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: settingsMidRowStyle.copyWith(fontSize: 15)),
+    )
   ];
 
-  if (onlineUrl != null) {
+  if (url1 != null) {
     mainColumn.addAll([
-      Divider(height: 0, color: Colors.black),
+      Divider(height: 10, color: Colors.black),
       ListTile(
         contentPadding: EdgeInsets.all(0),
-        onTap: () => launch(onlineUrl),
+        onTap: () => launch(url1),
         leading: Icon(Icons.link, color: Colors.black54),
-        title: Text(onlineUrl,
+        title: Text(url1,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: settingsMidRowStyle.copyWith(
@@ -153,7 +167,7 @@ Widget getMainBody({
                 )),
           ),
           onTap: () async {
-            var resHashMap = await getSubjectURL(disciplineId);
+            var resHashMap = await getSubjectURL(disciplineinplan);
             Map<String, Map> res = Map.from(resHashMap);
             String url = res[res.keys.toList()[0]]['url'];
             launch(url);

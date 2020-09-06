@@ -97,7 +97,7 @@ extension StringExtension on String {
 Map<String, Icon> searchIcons = {
   'group': Icon(MdiIcons.accountGroup, color: Colors.black),
   'name': Icon(MdiIcons.account, color: Colors.black),
-  'teacher': Icon(MdiIcons.account, color: Colors.black),
+  'lecturer': Icon(MdiIcons.teach, color: Colors.black),
   'auditorium': Icon(Icons.room, color: Colors.black),
 };
 

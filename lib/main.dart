@@ -16,6 +16,7 @@ import 'package:syncfusion_flutter_core/core.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   SyncfusionLicense.registerLicense(licenseKey);
@@ -51,7 +52,6 @@ class _HomePageState extends State<HomePage> {
   bool isTable = false;
   Icon viewIcon = Icon(MdiIcons.viewWeekOutline);
   CalendarView viewType = CalendarView.schedule;
-
   String scheduleType;
   String groupId;
   String groupName = '';
@@ -59,7 +59,6 @@ class _HomePageState extends State<HomePage> {
   String studentId;
   String ruzId;
   bool isScheduleLoaded = false;
-  bool isInternetConnError = false;
 
   void _uploadSchedule() {
     if (ruzId != null) {
@@ -70,15 +69,29 @@ class _HomePageState extends State<HomePage> {
         ruzId: ruzId,
         startDate: formatter.format(now.subtract(Duration(days: 2))),
         endDate: formatter.format(now.add(Duration(days: 21))),
-      ).then((scheduleJson) {
+      ).then((scheduleJson) async {
         if (scheduleJson.length > 0) {
           if (scheduleJson[0].runtimeType == SocketException) {
             print('Internet Error');
-            setState(() {
-              isInternetConnError = true;
-              events = DataSource([]);
-            });
-            return;
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            if (prefs.getKeys().contains('offlineData')) {
+              List<String> notes = prefs.getStringList('offlineData');
+              List<Map<String, dynamic>> notesFromSaved = List.generate(
+                notes.length,
+                (index) {
+                  return json.decode(notes[index]);
+                },
+              );
+              print('Loaded from offline');
+
+              _drawerKey.currentState.showSnackBar(SnackBar(
+                duration: Duration(seconds: 3),
+                content:
+                    Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
+              ));
+              scheduleJson = notesFromSaved; // continues to getAppointments()
+            } else
+              scheduleJson = [];
           }
         }
         print('Got Appointments');
@@ -86,14 +99,12 @@ class _HomePageState extends State<HomePage> {
             .then((value) => setState(() {
                   events = DataSource(value);
                   isScheduleLoaded = true;
-                  isInternetConnError = false;
                 }));
       });
     } else
       setState(() {
         events = DataSource([]);
         isScheduleLoaded = true;
-        isInternetConnError = false;
       });
   }
 
@@ -191,33 +202,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget internetConnectionErrorWidget() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Center(child: Text('Internet connection error.', style: dateStyle)),
-        SizedBox(height: 15),
-        FlatButton(
-            color: Colors.blueGrey,
-            child: Text('Retry', style: settingsTextStyle),
-            onPressed: () {
-              _uploadSchedule();
-            })
-      ],
-    );
-  }
-
   Widget getMainBody() {
-    if (!isInternetConnError) {
-      if (scheduleType != null) {
-        return getMainWidget(context);
-      } else if (isScheduleLoaded)
-        return getFirstLaunchWidget(context);
-      else
-        return Center(child: CircularProgressIndicator());
-    } else {
-      return internetConnectionErrorWidget();
-    }
+    if (scheduleType != null) {
+      return getMainWidget(context);
+    } else if (isScheduleLoaded)
+      return getFirstLaunchWidget(context);
+    else
+      return Center(child: CircularProgressIndicator());
   }
 
   @override

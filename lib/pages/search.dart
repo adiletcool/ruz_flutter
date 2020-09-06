@@ -21,7 +21,18 @@ class ObjSearch extends SearchDelegate<Obj> {
   final Bloc<ObjSearchEvent, ObjSearchState> objectBloc;
   final String searchType; // group / name
 
-  ObjSearch(this.objectBloc, this.searchType);
+  ObjSearch(this.objectBloc, this.searchType)
+      : super(searchFieldLabel: searchType.capitalize());
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return theme.copyWith(
+      primaryIconTheme: IconThemeData(color: Colors.black),
+      primaryColor: Colors.white,
+      primaryColorBrightness: Brightness.light,
+    );
+  }
 
   @override
   List<Widget> buildActions(BuildContext context) => null;
@@ -30,7 +41,7 @@ class ObjSearch extends SearchDelegate<Obj> {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: BackButtonIcon(),
-      onPressed: () => Navigator.pop(context),
+      onPressed: () => close(context, null),
     );
   }
 
@@ -45,7 +56,10 @@ class ObjSearch extends SearchDelegate<Obj> {
             return Center(child: CircularProgressIndicator());
           }
           if (state.hasError) {
-            return Container(child: Text('Error'));
+            return Container(
+                child: Center(
+              child: Text('Internet connection error', style: searchTextStyle),
+            ));
           }
 
           return ListView.builder(
@@ -96,7 +110,9 @@ class ObjSearch extends SearchDelegate<Obj> {
               },
             );
           } else if (snapshot.hasError) {
-            return Container();
+            return Center(
+                child:
+                    Text('Internet connection Error', style: searchTextStyle));
           } else {
             return Center(child: Text('Nothing found'));
           }
