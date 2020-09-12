@@ -46,6 +46,8 @@ TextStyle searchTextStyle =
 TextStyle settingsMidRowStyle = mainStyle.copyWith(fontSize: 16);
 TextStyle homeDrawerTextStyle =
     drawerTextStyle.copyWith(fontSize: 19, height: .7);
+TextStyle dlinesDDTextStyle =
+    mainStyle.copyWith(fontSize: 18, color: Colors.black);
 
 void saveSettings(
   String selectedType,

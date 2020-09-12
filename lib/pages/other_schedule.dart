@@ -77,6 +77,7 @@ class _OtherScheduleState extends State<OtherSchedule> {
       events: events,
       openSubjectInfo: (details) => openAppointment(details),
       viewType: CalendarView.schedule,
+      onLongPressFunc: (details) => () {},
     );
   }
 

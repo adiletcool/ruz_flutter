@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:ruz/pages/deadlines_page.dart';
 import 'package:ruz/pages/search.dart';
 import 'constants.dart';
 import 'pages/other_schedule.dart';
@@ -78,12 +79,9 @@ class _HomePageState extends State<HomePage> {
               List<String> notes = prefs.getStringList('offlineData');
               List<Map<String, dynamic>> notesFromSaved = List.generate(
                 notes.length,
-                (index) {
-                  return json.decode(notes[index]);
-                },
+                (index) => json.decode(notes[index]),
               );
               print('Loaded from offline');
-
               _drawerKey.currentState.showSnackBar(SnackBar(
                 duration: Duration(seconds: 3),
                 content:
@@ -170,9 +168,11 @@ class _HomePageState extends State<HomePage> {
       alignment: AlignmentDirectional.topStart,
       children: <Widget>[
         MyCalendar(
-            viewType: viewType,
-            events: events,
-            openSubjectInfo: (details) => openSubjectInfo(details)),
+          viewType: viewType,
+          events: events,
+          openSubjectInfo: (details) => openSubjectInfo(details),
+          onLongPressFunc: (details) => () {},
+        ),
         IconButton(
             icon: Icon(Icons.menu),
             onPressed: () => _drawerKey.currentState.openDrawer()),
@@ -238,11 +238,15 @@ class MyCalendar extends StatelessWidget {
     @required this.viewType,
     @required this.events,
     @required this.openSubjectInfo,
+    @required this.onLongPressFunc,
+    this.appointmentItemHeight = 50,
   }) : super(key: key);
 
   final CalendarView viewType;
   final DataSource events;
   final Function openSubjectInfo;
+  final Function onLongPressFunc;
+  final double appointmentItemHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +254,8 @@ class MyCalendar extends StatelessWidget {
     return SfCalendar(
       view: viewType,
       dataSource: events,
+      onLongPress: (CalendarLongPressDetails details) =>
+          onLongPressFunc(details),
       onTap: (CalendarTapDetails details) => openSubjectInfo(details),
       firstDayOfWeek: 1,
       appointmentTimeTextFormat: 'HH:mm',
@@ -270,6 +276,7 @@ class MyCalendar extends StatelessWidget {
         appointmentTextStyle: mainStyle.copyWith(),
         dayHeaderSettings: DayHeaderSettings(dateTextStyle: dateStyle),
         hideEmptyScheduleWeek: true,
+        appointmentItemHeight: appointmentItemHeight,
         monthHeaderSettings: MonthHeaderSettings(
           backgroundColor: HexColor.fromHex('#27363b'),
           height: 60,
@@ -338,10 +345,11 @@ class HomeDrawer extends StatelessWidget {
                         page: OtherSchedule(selectedValue, type));
                 },
               ),
+              Divider(color: Colors.white),
               ListTile(
                 leading: HomeDrawerIcon.icon(Icons.schedule),
                 title: Text('Deadlines', style: homeDrawerTextStyle),
-                onTap: () {},
+                onTap: () => openRoute(context, page: DeadlinesPage()),
               ),
               Divider(color: Colors.white),
               ListTile(
