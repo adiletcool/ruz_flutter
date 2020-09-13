@@ -50,10 +50,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void goBackHome(BuildContext context) {
-    Navigator.pushNamed(context, 'HomePage');
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -64,7 +60,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
-              title: Text('Settings', style: mainStyle),
+              title: Text('Настройки', style: mainStyle),
               backgroundColor: Colors.black87,
               elevation: 1,
               leading: IconButton(
@@ -81,7 +77,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     children: <Widget>[
                       Row(children: <Widget>[
-                        Text('Schedule: ', style: settingsTextStyle),
+                        Text('Расписание: ', style: settingsTextStyle),
                         Spacer(),
                         DropdownButton(
                           dropdownColor: HexColor.fromHex('#FF37474f'),

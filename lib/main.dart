@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(fontFamily: 'PTRootUI'),
           routes: {
             'HomePage': (context) => HomePage(),
+            'DeadlinesPage': (context) => DeadlinesPage(),
           },
         ));
   }
@@ -308,7 +309,7 @@ class HomeDrawer extends StatelessWidget {
         canvasColor: HexColor.fromHex('#212529').withOpacity(.92),
       ),
       child: Container(
-        width: 220,
+        width: 240,
         child: Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
@@ -320,7 +321,7 @@ class HomeDrawer extends StatelessWidget {
               Divider(color: Colors.white, thickness: 1.2),
               ListTile(
                   leading: HomeDrawerIcon.icon(Icons.room),
-                  title: Text('Classrooms', style: homeDrawerTextStyle),
+                  title: Text('Аудитории', style: homeDrawerTextStyle),
                   onTap: () async {
                     String type = 'auditorium';
                     Obj selectedValue = await showSearch(
@@ -333,7 +334,7 @@ class HomeDrawer extends StatelessWidget {
                   }),
               ListTile(
                 leading: HomeDrawerIcon.icon(MdiIcons.teach),
-                title: Text('Teachers', style: homeDrawerTextStyle),
+                title: Text('Преподаватели', style: homeDrawerTextStyle),
                 onTap: () async {
                   String type = 'lecturer';
                   Obj selectedValue = await showSearch(
@@ -348,17 +349,17 @@ class HomeDrawer extends StatelessWidget {
               Divider(color: Colors.white),
               ListTile(
                 leading: HomeDrawerIcon.icon(Icons.schedule),
-                title: Text('Deadlines', style: homeDrawerTextStyle),
-                onTap: () => openRoute(context, page: DeadlinesPage()),
+                title: Text('Дедлайны', style: homeDrawerTextStyle),
+                onTap: () => Navigator.pushNamed(context, 'DeadlinesPage'),
               ),
               Divider(color: Colors.white),
               ListTile(
                   leading: HomeDrawerIcon.icon(Icons.settings),
-                  title: Text('Settings', style: homeDrawerTextStyle),
+                  title: Text('Настройки', style: homeDrawerTextStyle),
                   onTap: () => openRoute(context, page: SettingsPage())),
               ListTile(
                 leading: HomeDrawerIcon.icon(Icons.info_outline),
-                title: Text('Info', style: homeDrawerTextStyle),
+                title: Text('Помощь', style: homeDrawerTextStyle),
                 onTap: () => showInfoDialog(context),
               ),
             ],

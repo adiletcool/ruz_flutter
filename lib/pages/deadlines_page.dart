@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:ruz/constants.dart';
 import 'package:ruz/main.dart' show MyCalendar, DataSource;
+import 'package:ruz/pages/deadline_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:path/path.dart';
@@ -146,6 +147,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
         endTime: dateEndDF,
         isAllDay: true,
         notes: notesEnc,
+        color: HexColor.fromHex('#1e555c'),
       );
     });
   }
@@ -193,7 +195,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: () async {
-          Navigator.pop(context);
+          goBackHome(context);
           return;
         },
         child: SafeArea(
@@ -212,7 +214,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                       children: <Widget>[
                         IconButton(
                           icon: Icon(Icons.arrow_back_ios),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => goBackHome(context),
                         ),
                         Text(currentList, style: dlinesDDTextStyle),
                       ],
@@ -232,24 +234,32 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   ),
                   floatingActionButtonLocation:
                       FloatingActionButtonLocation.centerDocked,
-                  floatingActionButton: _buildfloatingActionButton(),
+                  floatingActionButton: _buildfloatingActionButton(context),
                   bottomNavigationBar: this._buildBottomAppBar(context),
                 );
               }),
         ));
   }
 
-  FloatingActionButton _buildfloatingActionButton() {
+  FloatingActionButton _buildfloatingActionButton(BuildContext context) {
     return FloatingActionButton(
-      elevation: 10,
-      child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#Ffffff')),
-      backgroundColor: HexColor.fromHex('#E5043B'),
+      elevation: 15,
+      child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#edf2f4')),
+      backgroundColor: HexColor.fromHex('#2b2d42'),
       onPressed: () async {
-        await _addDeadline(Deadline(
-            list: currentList,
-            title: 'My first deadline',
-            description: '',
-            dateEnd: '12.09.2020'));
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => DeadlinePage(
+                    exists: false,
+                    currentList: currentList,
+                  )),
+        );
+        // await _addDeadline(Deadline(
+        //     list: currentList,
+        //     title: 'My first deadline',
+        //     description: '',
+        //     dateEnd: '12.09.2020'));
       },
     );
   }
