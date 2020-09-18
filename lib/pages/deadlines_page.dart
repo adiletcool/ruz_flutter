@@ -21,8 +21,6 @@ class DeadlinesPage extends StatefulWidget {
 
 class _DeadlinesPageState extends State<DeadlinesPage> {
   DataSource events = DataSource([]);
-  static const kDbFileName = 'deadlines.db';
-  static const kDbTableName = 'main';
 
   String currentList;
   List<String> availableLists;
@@ -51,6 +49,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
 
   Future<void> _initDb() async {
     final dbFolder = await getDatabasesPath();
+
     if (!await Directory(dbFolder).exists()) {
       await Directory(dbFolder).create(recursive: true);
     }
@@ -77,19 +76,9 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     print('${jsons.length} rows retrieved from db!');
 
     _deadlines = jsons.map((json) => Deadline.fromJsonMap(json)).toList();
+
     getAppointments().then((value) => events = DataSource(value));
     setState(() {});
-  }
-
-  Future<void> _addDeadline(Deadline deadline) async {
-    _db.transaction((Transaction txn) async {
-      int id = await txn.rawInsert('''
-        INSERT INTO $kDbTableName (list, title, description, dateEnd)
-        VALUES ("${deadline.list}", "${deadline.title}", "${deadline.description}", "${deadline.dateEnd}")
-      ''');
-      print('Inserted todo item with id=$id.');
-      _getDeadlines(currentList);
-    });
   }
 
   Future<void> _deleteDeadline(deadlineId) async {
@@ -147,7 +136,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
         endTime: dateEndDF,
         isAllDay: true,
         notes: notesEnc,
-        color: HexColor.fromHex('#1e555c'),
+        color: HexColor.fromHex('#333644'),
       );
     });
   }
@@ -159,6 +148,16 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       openSubjectInfo: (CalendarTapDetails details) {
         List<dynamic> res = details.appointments;
         if (res != null) {
+          Map<String, dynamic> appNotes =
+              json.decode(details.appointments[0].notes);
+
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => DeadlinePage(
+                        currentList: currentList,
+                        existingNotes: appNotes,
+                      )));
           print(details.appointments[0].notes);
         }
       },
@@ -244,22 +243,15 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
   FloatingActionButton _buildfloatingActionButton(BuildContext context) {
     return FloatingActionButton(
       elevation: 15,
-      child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#edf2f4')),
-      backgroundColor: HexColor.fromHex('#2b2d42'),
+      child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#34222e')),
+      backgroundColor: HexColor.fromHex('#c65f63'),
       onPressed: () async {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => DeadlinePage(
-                    exists: false,
-                    currentList: currentList,
-                  )),
+            builder: (context) => DeadlinePage(currentList: currentList),
+          ),
         );
-        // await _addDeadline(Deadline(
-        //     list: currentList,
-        //     title: 'My first deadline',
-        //     description: '',
-        //     dateEnd: '12.09.2020'));
       },
     );
   }

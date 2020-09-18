@@ -86,8 +86,8 @@ Future<Map<String, String>> getSettings() async {
 Color getAppointmentColor(lessonType) {
   lessonType ??= '';
   return ['лекция', 'lecture'].contains(lessonType.toLowerCase())
-      ? HexColor.fromHex('#346E86')
-      : HexColor.fromHex('#2b2d42');
+      ? HexColor.fromHex('#2d767f')
+      : HexColor.fromHex('#1a2639');
 }
 
 extension StringExtension on String {
@@ -106,3 +106,6 @@ Map<String, Icon> searchIcons = {
 void goBackHome(BuildContext context) {
   Navigator.pushNamed(context, 'HomePage');
 }
+
+const kDbFileName = 'deadlines.db';
+const kDbTableName = 'main';

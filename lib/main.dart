@@ -83,14 +83,15 @@ class _HomePageState extends State<HomePage> {
                 (index) => json.decode(notes[index]),
               );
               print('Loaded from offline');
-              _drawerKey.currentState.showSnackBar(SnackBar(
-                duration: Duration(seconds: 3),
-                content:
-                    Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
-              ));
+              _drawerKey.currentState.showSnackBar(
+                SnackBar(
+                  duration: Duration(seconds: 3),
+                  content:
+                      Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
+                ),
+              );
               scheduleJson = notesFromSaved; // continues to getAppointments()
-            } else
-              scheduleJson = [];
+            }
           }
         }
         print('Got Appointments');
