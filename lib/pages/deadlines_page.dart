@@ -6,7 +6,7 @@ import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:ruz/constants.dart';
-import 'package:ruz/main.dart' show MyCalendar, DataSource;
+import 'package:ruz/main.dart' show MyCalendar, DataSource, openRoute;
 import 'package:ruz/pages/deadline_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -21,7 +21,6 @@ class DeadlinesPage extends StatefulWidget {
 
 class _DeadlinesPageState extends State<DeadlinesPage> {
   DataSource events = DataSource([]);
-
   String currentList;
   List<String> availableLists;
   Database _db;
@@ -41,10 +40,10 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     prefs.setStringList('availableLists', availableLists);
   }
 
-  void _changeCurrentListUpdate(listName) {
+  void _changeCurrentListUpdate(context, listName) {
     currentList = listName;
     _saveSettings();
-    _getDeadlines(currentList);
+    openRoute(context, page: DeadlinesPage());
   }
 
   Future<void> _initDb() async {
@@ -76,8 +75,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     print('${jsons.length} rows retrieved from db!');
 
     _deadlines = jsons.map((json) => Deadline.fromJsonMap(json)).toList();
-
-    getAppointments().then((value) => events = DataSource(value));
+    events = DataSource(await getAppointments(deadlines: _deadlines));
     setState(() {});
   }
 
@@ -87,22 +85,27 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
         WHERE id = "$deadlineId"
       ''');
     print('Updated $count records in db.');
-    _getDeadlines(currentList);
+    await _getDeadlines(currentList);
   }
 
-  Future<void> _deleteCurrentList() async {
+  void _deleteCurrentList(BuildContext ctx) {
     if (currentList == 'Мой список') {
       Fluttertoast.showToast(
         msg: 'Нельзя удалить стандартный список',
         textColor: Colors.white,
         backgroundColor: Colors.black,
       );
+      Navigator.pop(ctx);
     } else {
       for (Deadline deadline in _deadlines) _deleteDeadline(deadline.id);
       availableLists.remove(currentList);
-      _changeCurrentListUpdate('Мой список');
+      Fluttertoast.showToast(
+        msg: 'Список $currentList удален',
+        textColor: Colors.white,
+        backgroundColor: Colors.black,
+      );
+      _changeCurrentListUpdate(ctx, 'Мой список');
     }
-    setState(() {});
   }
 
   Future<bool> _asyncInit() async {
@@ -114,13 +117,13 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     return true;
   }
 
-  Future<List<Appointment>> getAppointments() async {
-    return List.generate(_deadlines.length, (i) {
-      int id = _deadlines[i].id;
-      String list = _deadlines[i].list;
-      String title = _deadlines[i].title;
-      String description = _deadlines[i].description;
-      String dateEnd = _deadlines[i].dateEnd;
+  Future<List<Appointment>> getAppointments({@required deadlines}) async {
+    return List.generate(deadlines.length, (i) {
+      int id = deadlines[i].id;
+      String list = deadlines[i].list;
+      String title = deadlines[i].title;
+      String description = deadlines[i].description;
+      String dateEnd = deadlines[i].dateEnd;
       DateTime dateEndDF = DateFormat("dd.MM.yyyy").parse(dateEnd);
       String notesEnc = json.encode({
         'id': id,
@@ -285,8 +288,10 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                             underline: Container(),
                             value: currentList,
                             onChanged: (value) {
-                              _changeCurrentListUpdate(value);
-                              Navigator.pop(context);
+                              if (currentList != value)
+                                _changeCurrentListUpdate(context, value);
+                              else
+                                Navigator.pop(context);
                             },
                             items: availableLists
                                 .map((String listName) =>
@@ -332,10 +337,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                     ListTile(
                       leading: Icon(Icons.delete_sweep, color: Colors.black),
                       title: Text('Удалить список', style: dlinesDDTextStyle),
-                      onTap: () {
-                        _deleteCurrentList();
-                        Navigator.pop(context);
-                      },
+                      onTap: () => _deleteCurrentList(context),
                     ),
                   ],
                 ),
@@ -382,10 +384,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   onPressed: () {
                     if (_formKey.currentState.validate()) {
                       availableLists.add(_titleController.text);
-                      _changeCurrentListUpdate(_titleController.text);
-                      _saveSettings();
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                      _changeCurrentListUpdate(context, _titleController.text);
                     }
                   },
                 ),

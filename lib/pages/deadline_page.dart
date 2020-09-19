@@ -276,7 +276,12 @@ class _DeadlinePageState extends State<DeadlinePage> {
               tooltip: (widget.existingNotes != null)
                   ? 'Сохранить и выйти'
                   : 'Отмена',
-              icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+              icon: (widget.existingNotes != null)
+                  ? Text('Ок',
+                      style: headerStyle.copyWith(
+                        color: HexColor.fromHex('#33658a'),
+                      ))
+                  : Icon(Icons.arrow_back_ios, color: Colors.black),
               onPressed: () {
                 if (widget.existingNotes != null) {
                   int ddId = existingNotes['id'];

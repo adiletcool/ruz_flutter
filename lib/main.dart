@@ -139,21 +139,12 @@ class _HomePageState extends State<HomePage> {
     if (res != null) {
       String notesEncoded = res[0].notes;
       var notesDecoded = json.decode(notesEncoded);
-      Navigator.of(context).push(_openSubjectRoute(notesDecoded));
+      openRoute(
+        context,
+        page: SubjectPage(notes: notesDecoded),
+        beginOffset: Offset(1, 1),
+      );
     }
-  }
-
-  Route _openSubjectRoute(notesDecoded) {
-    return PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            SubjectPage(notes: notesDecoded),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var tween = Tween(begin: const Offset(1, 1), end: Offset.zero)
-              .chain(CurveTween(curve: Curves.ease));
-
-          return SlideTransition(
-              position: animation.drive(tween), child: child);
-        });
   }
 
   String getStudentName() {
@@ -242,6 +233,9 @@ class MyCalendar extends StatelessWidget {
     @required this.openSubjectInfo,
     @required this.onLongPressFunc,
     this.appointmentItemHeight = 50,
+    this.minDate,
+    this.maxDate,
+    this.hindeEmptyWeeks = true,
   }) : super(key: key);
 
   final CalendarView viewType;
@@ -249,11 +243,16 @@ class MyCalendar extends StatelessWidget {
   final Function openSubjectInfo;
   final Function onLongPressFunc;
   final double appointmentItemHeight;
+  final DateTime minDate;
+  final DateTime maxDate;
+  final bool hindeEmptyWeeks;
 
   @override
   Widget build(BuildContext context) {
     final DateTime now = DateTime.now();
     return SfCalendar(
+      minDate: minDate,
+      maxDate: maxDate,
       view: viewType,
       dataSource: events,
       onLongPress: (CalendarLongPressDetails details) =>
@@ -277,7 +276,7 @@ class MyCalendar extends StatelessWidget {
       scheduleViewSettings: ScheduleViewSettings(
         appointmentTextStyle: mainStyle.copyWith(),
         dayHeaderSettings: DayHeaderSettings(dateTextStyle: dateStyle),
-        hideEmptyScheduleWeek: true,
+        hideEmptyScheduleWeek: hindeEmptyWeeks,
         appointmentItemHeight: appointmentItemHeight,
         monthHeaderSettings: MonthHeaderSettings(
           backgroundColor: HexColor.fromHex('#27363b'),
@@ -317,7 +316,7 @@ class HomeDrawer extends StatelessWidget {
             children: <Widget>[
               ListTile(
                 contentPadding: EdgeInsets.only(left: 20),
-                title: Text('Schedule', style: drawerTextStyle),
+                title: Text('Schedule:', style: drawerTextStyle),
               ),
               Divider(color: Colors.white, thickness: 1.2),
               ListTile(
@@ -424,11 +423,19 @@ void showInfoDialog(BuildContext context) {
       });
 }
 
-void openRoute(BuildContext context, {@required Widget page}) {
+void openRoute(
+  BuildContext context, {
+  @required Widget page,
+  Offset beginOffset,
+  Offset endOffset,
+}) {
+  beginOffset ??= Offset(1, 0);
+  endOffset ??= Offset.zero;
+
   Navigator.of(context).push(PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        var tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
+        var tween = Tween(begin: beginOffset, end: endOffset)
             .chain(CurveTween(curve: Curves.ease));
 
         return SlideTransition(position: animation.drive(tween), child: child);
