@@ -1,5 +1,8 @@
 import 'dart:io';
-import 'deadlines_page.dart' show Deadline;
+import 'package:ruz/main.dart';
+import 'package:ruz/pages/deleted_deadlines_page.dart';
+
+import 'deadlines_page.dart' show Deadline, DeadlinesPage;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +26,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController titleController = TextEditingController();
   TextEditingController descController = TextEditingController();
-  String dateSet = 'Добавить дату';
+  String dateSet = DateFormat("dd.MM.yyyy").format(DateTime.now());
   Database _db;
   Color dateIconColor = HexColor.fromHex('#33658a');
 
@@ -46,8 +49,9 @@ class _DeadlinePageState extends State<DeadlinePage> {
   Future<void> _addDeadline(Deadline deadline) async {
     _db.transaction((Transaction txn) async {
       int id = await txn.rawInsert('''
-        INSERT INTO $kDbTableName (list, title, description, dateEnd)
-        VALUES ("${deadline.list}", "${deadline.title}", "${deadline.description}", "${deadline.dateEnd}")
+        INSERT INTO $kDbTableName (list, title, description, dateEnd, isDeleted, isDone)
+        VALUES ("${deadline.list}", "${deadline.title}", "${deadline.description}",
+         "${deadline.dateEnd}", "${deadline.isDeleted}", "${deadline.isDone}")
       ''');
       print('Inserted deadline with id=$id.');
     });
@@ -75,10 +79,33 @@ class _DeadlinePageState extends State<DeadlinePage> {
   }
 
   Future<void> _deleteDeadline(deadlineId) async {
+    _db.transaction((Transaction txn) async {
+      int id = await txn.rawUpdate('''
+        UPDATE $kDbTableName
+        SET isDeleted = "true"
+        WHERE id == $deadlineId
+        ''');
+      print('Deleted deadline with id=$id');
+    });
+  }
+
+  Future<void> _restoreDeadline(deadlineId) async {
+    _db.transaction((Transaction txn) async {
+      int id = await txn.rawUpdate('''
+        UPDATE $kDbTableName
+        SET isDeleted = "false"
+        WHERE id == $deadlineId
+        ''');
+      print('Restored deadline with id=$id');
+    });
+  }
+
+  Future<void> _deleteForeverDeadline(deadlineId) async {
     await this._db.rawDelete('''
         DELETE FROM $kDbTableName
         WHERE id = "$deadlineId"
       ''');
+    print('Deleted deadline with id=$deadlineId');
   }
 
   @override
@@ -210,28 +237,59 @@ class _DeadlinePageState extends State<DeadlinePage> {
   @override
   Widget build(BuildContext context) {
     List<Widget> appBarActions = (widget.existingNotes != null)
-        ? <Widget>[
-            IconButton(
-              tooltip: 'Удалить',
-              icon: Icon(Icons.delete_outline, color: Colors.black, size: 28),
-              onPressed: () {
-                int ddId = widget.existingNotes['id'];
-                _deleteDeadline(ddId);
-                Navigator.pushNamed(context, 'DeadlinesPage');
-                Fluttertoast.showToast(
-                  msg: 'Удалено',
-                  textColor: Colors.white,
-                  backgroundColor: Colors.black,
-                );
-              },
-            ),
-            IconButton(
-              tooltip: 'Выполнено',
-              icon: Icon(MdiIcons.calendarCheckOutline,
-                  color: Colors.black, size: 28),
-              onPressed: () {},
-            ),
-          ]
+        ? widget.existingNotes['isDeleted'] == 'false'
+            ? <Widget>[
+                IconButton(
+                  tooltip: 'Удалить',
+                  icon:
+                      Icon(Icons.delete_outline, color: Colors.black, size: 28),
+                  onPressed: () {
+                    int ddId = widget.existingNotes['id'];
+                    _deleteDeadline(ddId);
+                    Navigator.pushNamed(context, 'DeadlinesPage');
+                    Fluttertoast.showToast(
+                      msg: 'Удалено',
+                      textColor: Colors.white,
+                      backgroundColor: Colors.black,
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Выполнено',
+                  icon: Icon(MdiIcons.calendarCheckOutline,
+                      color: Colors.black, size: 28),
+                  onPressed: () {},
+                ),
+              ]
+            : <Widget>[
+                IconButton(
+                    tooltip: 'Удалить навсегда',
+                    icon: Icon(Icons.delete_forever,
+                        color: Colors.black, size: 28),
+                    onPressed: () {
+                      int ddId = widget.existingNotes['id'];
+                      _deleteForeverDeadline(ddId);
+                      openRoute(context, page: DeletedDeadlinesPage());
+                      Fluttertoast.showToast(
+                        msg: 'Удалено навсегда',
+                        textColor: Colors.white,
+                        backgroundColor: Colors.black,
+                      );
+                    }),
+                IconButton(
+                    tooltip: 'Восстановить',
+                    icon: Icon(Icons.restore, color: Colors.black, size: 28),
+                    onPressed: () {
+                      int ddId = widget.existingNotes['id'];
+                      _restoreDeadline(ddId);
+                      openRoute(context, page: DeadlinesPage());
+                      Fluttertoast.showToast(
+                        msg: 'Восстановлено',
+                        textColor: Colors.white,
+                        backgroundColor: Colors.black,
+                      );
+                    }),
+              ]
         : [
             FlatButton(
               child: Text('Сохранить',
@@ -240,22 +298,15 @@ class _DeadlinePageState extends State<DeadlinePage> {
               onPressed: () async {
                 if (_formKey.currentState.validate()) {
                   FocusScope.of(context).unfocus(); // hide keyboard
-                  if (dateSet != 'Добавить дату') {
-                    await _addDeadline(Deadline(
-                      list: widget.currentList,
-                      title: titleController.text,
-                      description: descController.text,
-                      dateEnd: dateSet,
-                    ));
-                    Navigator.pushNamed(context, 'DeadlinesPage');
-                  } else {
-                    Fluttertoast.showToast(
-                      msg: 'Выберите дату',
-                      textColor: Colors.white,
-                      backgroundColor: Colors.black,
-                    );
-                    setState(() => dateIconColor = HexColor.fromHex('#c65f63'));
-                  }
+                  await _addDeadline(Deadline(
+                    list: widget.currentList,
+                    title: titleController.text,
+                    description: descController.text,
+                    dateEnd: dateSet,
+                    isDeleted: 'false',
+                    isDone: 'false',
+                  ));
+                  Navigator.pushNamed(context, 'DeadlinesPage');
                 }
               },
             )

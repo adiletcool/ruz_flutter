@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:ruz/constants.dart';
 import 'package:ruz/main.dart' show MyCalendar, DataSource, openRoute;
 import 'package:ruz/pages/deadline_page.dart';
+import 'package:ruz/pages/deleted_deadlines_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:path/path.dart';
@@ -53,6 +53,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       await Directory(dbFolder).create(recursive: true);
     }
     final dbPath = join(dbFolder, kDbFileName);
+
     _db = await openDatabase(
       dbPath,
       version: 1,
@@ -63,28 +64,38 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
           list TEXT,
           title TEXT,
           description TEXT,
-          dateEnd TEXT)
+          dateEnd TEXT,
+          isDeleted Text,
+          isDone Text)
       ''');
       },
     );
   }
 
   Future<void> _getDeadlines(currentList) async {
-    List<Map> jsons = await _db
-        .rawQuery('SELECT * FROM $kDbTableName  WHERE list = "$currentList"');
+    List<Map> jsons = await _db.rawQuery(
+        'SELECT * FROM $kDbTableName  WHERE (list = "$currentList" AND isDeleted = "false" AND isDone = "false")');
     print('${jsons.length} rows retrieved from db!');
 
     _deadlines = jsons.map((json) => Deadline.fromJsonMap(json)).toList();
-    events = DataSource(await getAppointments(deadlines: _deadlines));
+    events = DataSource(await getDDAppointments(deadlines: _deadlines));
     setState(() {});
   }
 
   Future<void> _deleteDeadline(deadlineId) async {
-    final count = await this._db.rawDelete('''
-        DELETE FROM $kDbTableName
-        WHERE id = "$deadlineId"
-      ''');
-    print('Updated $count records in db.');
+    _db.transaction((Transaction txn) async {
+      int id = await txn.rawUpdate('''
+        UPDATE $kDbTableName
+        SET isDeleted = "true"
+        WHERE id == $deadlineId
+        ''');
+      print('Deleted deadline with id=$id');
+    });
+    Fluttertoast.showToast(
+      msg: 'Удалено',
+      textColor: Colors.white,
+      backgroundColor: Colors.black,
+    );
     await _getDeadlines(currentList);
   }
 
@@ -117,33 +128,6 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     return true;
   }
 
-  Future<List<Appointment>> getAppointments({@required deadlines}) async {
-    return List.generate(deadlines.length, (i) {
-      int id = deadlines[i].id;
-      String list = deadlines[i].list;
-      String title = deadlines[i].title;
-      String description = deadlines[i].description;
-      String dateEnd = deadlines[i].dateEnd;
-      DateTime dateEndDF = DateFormat("dd.MM.yyyy").parse(dateEnd);
-      String notesEnc = json.encode({
-        'id': id,
-        'list': list,
-        'title': title,
-        'description': description,
-        'dateEnd': dateEnd,
-      });
-
-      return Appointment(
-        subject: title,
-        startTime: dateEndDF,
-        endTime: dateEndDF,
-        isAllDay: true,
-        notes: notesEnc,
-        color: HexColor.fromHex('#333644'),
-      );
-    });
-  }
-
   Widget getMainBody(BuildContext context) {
     return MyCalendar(
       viewType: CalendarView.schedule,
@@ -154,13 +138,12 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
           Map<String, dynamic> appNotes =
               json.decode(details.appointments[0].notes);
 
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => DeadlinePage(
-                        currentList: currentList,
-                        existingNotes: appNotes,
-                      )));
+          openRoute(context,
+              page: DeadlinePage(
+                currentList: currentList,
+                existingNotes: appNotes,
+              ),
+              beginOffset: Offset(0, 1));
           print(details.appointments[0].notes);
         }
       },
@@ -248,13 +231,10 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       elevation: 15,
       child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#34222e')),
       backgroundColor: HexColor.fromHex('#c65f63'),
-      onPressed: () async {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DeadlinePage(currentList: currentList),
-          ),
-        );
+      onPressed: () {
+        openRoute(context,
+            page: DeadlinePage(currentList: currentList),
+            beginOffset: Offset(0, 1));
       },
     );
   }
@@ -319,6 +299,15 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                         leading: Icon(Icons.done, color: Colors.black),
                         title: Text('Выполненные', style: dlinesDDTextStyle),
                         onTap: () {},
+                      )),
+                  Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: ListTile(
+                        leading:
+                            Icon(Icons.delete_outline, color: Colors.black),
+                        title: Text('Удаленные', style: dlinesDDTextStyle),
+                        onTap: () =>
+                            openRoute(context, page: DeletedDeadlinesPage()),
                       )),
                   Divider(color: Colors.black45),
                 ],
@@ -421,21 +410,35 @@ class Deadline {
   final String title;
   final String description;
   final String dateEnd; //dd.MM.yyyy
+  final String isDeleted;
+  final String isDone;
 
-  const Deadline(
-      {this.id, this.list, this.title, this.description, this.dateEnd});
+  const Deadline({
+    this.id,
+    this.list,
+    this.title,
+    this.description,
+    this.dateEnd,
+    this.isDeleted,
+    this.isDone,
+  });
 
   Deadline.fromJsonMap(Map<String, dynamic> map)
       : id = map['id'],
         list = map['list'],
         title = map['title'],
         description = map['description'],
-        dateEnd = map['dateEnd'];
+        dateEnd = map['dateEnd'],
+        isDeleted = map['isDeleted'],
+        isDone = map['isDone'];
 
   Map<String, dynamic> toJsonMap() => {
+        'list': list,
         'title': title,
         'description': description,
         'dateEnd': dateEnd,
+        'isDeleted': isDeleted,
+        'isDone': isDone,
       };
 
   @override

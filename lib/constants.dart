@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:intl/intl.dart';
 
 extension HexColor on Color {
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".
@@ -109,3 +112,34 @@ void goBackHome(BuildContext context) {
 
 const kDbFileName = 'deadlines.db';
 const kDbTableName = 'main';
+
+Future<List<Appointment>> getDDAppointments({@required deadlines}) async {
+  return List.generate(deadlines.length, (i) {
+    int id = deadlines[i].id;
+    String list = deadlines[i].list;
+    String title = deadlines[i].title;
+    String description = deadlines[i].description;
+    String dateEnd = deadlines[i].dateEnd;
+    DateTime dateEndDF = DateFormat("dd.MM.yyyy").parse(dateEnd);
+    String isDeleted = deadlines[i].isDeleted;
+    String isDone = deadlines[i].isDone;
+    String notesEnc = json.encode({
+      'id': id,
+      'list': list,
+      'title': title,
+      'description': description,
+      'dateEnd': dateEnd,
+      'isDeleted': isDeleted,
+      'isDone': isDone,
+    });
+
+    return Appointment(
+      subject: title,
+      startTime: dateEndDF,
+      endTime: dateEndDF,
+      isAllDay: true,
+      notes: notesEnc,
+      color: HexColor.fromHex('#333644'),
+    );
+  });
+}
