@@ -86,8 +86,7 @@ class _HomePageState extends State<HomePage> {
               _drawerKey.currentState.showSnackBar(
                 SnackBar(
                   duration: Duration(seconds: 3),
-                  content:
-                      Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
+                  content: Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
                 ),
               );
               scheduleJson = notesFromSaved; // continues to getAppointments()
@@ -95,11 +94,10 @@ class _HomePageState extends State<HomePage> {
           }
         }
         print('Got Appointments');
-        getAppointments(scheduleJson: scheduleJson)
-            .then((value) => setState(() {
-                  events = DataSource(value);
-                  isScheduleLoaded = true;
-                }));
+        getAppointments(scheduleJson: scheduleJson).then((value) => setState(() {
+              events = DataSource(value);
+              isScheduleLoaded = true;
+            }));
       });
     } else
       setState(() {
@@ -128,9 +126,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       isTable = !isTable;
       viewType = isTable ? CalendarView.week : CalendarView.schedule;
-      viewIcon = isTable
-          ? Icon(MdiIcons.viewDayOutline)
-          : Icon(MdiIcons.viewWeekOutline);
+      viewIcon = isTable ? Icon(MdiIcons.viewDayOutline) : Icon(MdiIcons.viewWeekOutline);
     });
   }
 
@@ -166,12 +162,8 @@ class _HomePageState extends State<HomePage> {
           openSubjectInfo: (details) => openSubjectInfo(details),
           onLongPressFunc: (details) => () {},
         ),
-        IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () => _drawerKey.currentState.openDrawer()),
-        Positioned(
-            left: 60,
-            child: IconButton(icon: viewIcon, onPressed: () => switchView())),
+        IconButton(icon: Icon(Icons.menu), onPressed: () => _drawerKey.currentState.openDrawer()),
+        Positioned(left: 60, child: IconButton(icon: viewIcon, onPressed: () => switchView())),
         Positioned(
             // top: 12,
             left: 120,
@@ -255,8 +247,7 @@ class MyCalendar extends StatelessWidget {
       maxDate: maxDate,
       view: viewType,
       dataSource: events,
-      onLongPress: (CalendarLongPressDetails details) =>
-          onLongPressFunc(details),
+      onLongPress: (CalendarLongPressDetails details) => onLongPressFunc(details),
       onTap: (CalendarTapDetails details) => openSubjectInfo(details),
       firstDayOfWeek: 1,
       appointmentTimeTextFormat: 'HH:mm',
@@ -324,26 +315,16 @@ class HomeDrawer extends StatelessWidget {
                   title: Text('Аудитории', style: homeDrawerTextStyle),
                   onTap: () async {
                     String type = 'auditorium';
-                    Obj selectedValue = await showSearch(
-                        context: context,
-                        delegate:
-                            ObjSearch(BlocProvider.of<ObjBloc>(context), type));
-                    if (selectedValue != null)
-                      openRoute(context,
-                          page: OtherSchedule(selectedValue, type));
+                    Obj selectedValue = await showSearch(context: context, delegate: ObjSearch(BlocProvider.of<ObjBloc>(context), type));
+                    if (selectedValue != null) openRoute(context, page: OtherSchedule(selectedValue, type));
                   }),
               ListTile(
                 leading: HomeDrawerIcon.icon(MdiIcons.teach),
                 title: Text('Преподаватели', style: homeDrawerTextStyle),
                 onTap: () async {
                   String type = 'lecturer';
-                  Obj selectedValue = await showSearch(
-                      context: context,
-                      delegate:
-                          ObjSearch(BlocProvider.of<ObjBloc>(context), type));
-                  if (selectedValue != null)
-                    openRoute(context,
-                        page: OtherSchedule(selectedValue, type));
+                  Obj selectedValue = await showSearch(context: context, delegate: ObjSearch(BlocProvider.of<ObjBloc>(context), type));
+                  if (selectedValue != null) openRoute(context, page: OtherSchedule(selectedValue, type));
                 },
               ),
               Divider(color: Colors.white),
@@ -435,8 +416,7 @@ void openRoute(
   Navigator.of(context).push(PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        var tween = Tween(begin: beginOffset, end: endOffset)
-            .chain(CurveTween(curve: Curves.ease));
+        var tween = Tween(begin: beginOffset, end: endOffset).chain(CurveTween(curve: Curves.ease));
 
         return SlideTransition(position: animation.drive(tween), child: child);
       }));

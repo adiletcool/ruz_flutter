@@ -120,8 +120,9 @@ Future<List<Appointment>> getDDAppointments({@required deadlines}) async {
     String title = deadlines[i].title;
     String description = deadlines[i].description;
     String dateEnd = deadlines[i].dateEnd;
-    DateTime dateEndDF = DateFormat("dd.MM.yyyy").parse(dateEnd);
-    String isDeleted = deadlines[i].isDeleted;
+    String timeEnd = deadlines[i].timeEnd;
+    DateTime dateEndDF =
+        DateFormat("dd.MM.yyyy HH:mm").parse('$dateEnd $timeEnd');
     String isDone = deadlines[i].isDone;
     String notesEnc = json.encode({
       'id': id,
@@ -129,7 +130,7 @@ Future<List<Appointment>> getDDAppointments({@required deadlines}) async {
       'title': title,
       'description': description,
       'dateEnd': dateEnd,
-      'isDeleted': isDeleted,
+      'timeEnd': timeEnd,
       'isDone': isDone,
     });
 

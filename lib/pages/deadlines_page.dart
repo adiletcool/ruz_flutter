@@ -7,7 +7,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:ruz/constants.dart';
 import 'package:ruz/main.dart' show MyCalendar, DataSource, openRoute;
 import 'package:ruz/pages/deadline_page.dart';
-import 'package:ruz/pages/deleted_deadlines_page.dart';
+import 'package:ruz/pages/submited_deadlines_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:path/path.dart';
@@ -53,7 +53,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       await Directory(dbFolder).create(recursive: true);
     }
     final dbPath = join(dbFolder, kDbFileName);
-
+    // await deleteDatabase(dbPath);
     _db = await openDatabase(
       dbPath,
       version: 1,
@@ -65,7 +65,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
           title TEXT,
           description TEXT,
           dateEnd TEXT,
-          isDeleted Text,
+          timeEnd Text,
           isDone Text)
       ''');
       },
@@ -73,8 +73,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
   }
 
   Future<void> _getDeadlines(currentList) async {
-    List<Map> jsons = await _db.rawQuery(
-        'SELECT * FROM $kDbTableName  WHERE (list = "$currentList" AND isDeleted = "false" AND isDone = "false")');
+    List<Map> jsons = await _db.rawQuery('SELECT * FROM $kDbTableName  WHERE (list = "$currentList" AND isDone = "false")');
     print('${jsons.length} rows retrieved from db!');
 
     _deadlines = jsons.map((json) => Deadline.fromJsonMap(json)).toList();
@@ -82,15 +81,12 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     setState(() {});
   }
 
-  Future<void> _deleteDeadline(deadlineId) async {
-    _db.transaction((Transaction txn) async {
-      int id = await txn.rawUpdate('''
-        UPDATE $kDbTableName
-        SET isDeleted = "true"
-        WHERE id == $deadlineId
-        ''');
-      print('Deleted deadline with id=$id');
-    });
+  Future<void> _deleteForeverDeadline(deadlineId) async {
+    await this._db.rawDelete('''
+        DELETE FROM $kDbTableName
+        WHERE id = "$deadlineId"
+      ''');
+    print('Deleted deadline with id=$deadlineId');
     Fluttertoast.showToast(
       msg: 'Удалено',
       textColor: Colors.white,
@@ -108,7 +104,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       );
       Navigator.pop(ctx);
     } else {
-      for (Deadline deadline in _deadlines) _deleteDeadline(deadline.id);
+      for (Deadline deadline in _deadlines) _deleteForeverDeadline(deadline.id);
       availableLists.remove(currentList);
       Fluttertoast.showToast(
         msg: 'Список $currentList удален',
@@ -135,8 +131,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       openSubjectInfo: (CalendarTapDetails details) {
         List<dynamic> res = details.appointments;
         if (res != null) {
-          Map<String, dynamic> appNotes =
-              json.decode(details.appointments[0].notes);
+          Map<String, dynamic> appNotes = json.decode(details.appointments[0].notes);
 
           openRoute(context,
               page: DeadlinePage(
@@ -147,13 +142,11 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
           print(details.appointments[0].notes);
         }
       },
-      onLongPressFunc: (CalendarLongPressDetails details) =>
-          onAppointmentLongPress(context, details),
+      onLongPressFunc: (CalendarLongPressDetails details) => onAppointmentLongPress(context, details),
     );
   }
 
-  void onAppointmentLongPress(
-      BuildContext context, CalendarLongPressDetails details) {
+  void onAppointmentLongPress(BuildContext context, CalendarLongPressDetails details) {
     Map<String, dynamic> appNotes = json.decode(details.appointments[0].notes);
     showDialog<String>(
         context: context,
@@ -168,7 +161,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   leading: Icon(Icons.delete, color: Colors.black),
                   title: Text('Delete'),
                   onTap: () {
-                    _deleteDeadline(appNotes['id']);
+                    _deleteForeverDeadline(appNotes['id']);
                     Navigator.pop(context);
                   },
                 ),
@@ -217,8 +210,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   body: Stack(
                     children: mainBodyStackChildren,
                   ),
-                  floatingActionButtonLocation:
-                      FloatingActionButtonLocation.centerDocked,
+                  floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
                   floatingActionButton: _buildfloatingActionButton(context),
                   bottomNavigationBar: this._buildBottomAppBar(context),
                 );
@@ -232,9 +224,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
       child: Icon(Icons.add, size: 40, color: HexColor.fromHex('#34222e')),
       backgroundColor: HexColor.fromHex('#c65f63'),
       onPressed: () {
-        openRoute(context,
-            page: DeadlinePage(currentList: currentList),
-            beginOffset: Offset(0, 1));
+        openRoute(context, page: DeadlinePage(currentList: currentList), beginOffset: Offset(0, 1));
       },
     );
   }
@@ -258,8 +248,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Padding(
-                      padding:
-                          const EdgeInsets.only(right: 35, left: 30, top: 10),
+                      padding: const EdgeInsets.only(right: 35, left: 30, top: 10),
                       child: Row(
                         children: [
                           Icon(MdiIcons.formSelect, color: Colors.black),
@@ -274,11 +263,9 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                                 Navigator.pop(context);
                             },
                             items: availableLists
-                                .map((String listName) =>
-                                    DropdownMenuItem<String>(
+                                .map((String listName) => DropdownMenuItem<String>(
                                       value: listName,
-                                      child: Text(listName,
-                                          style: dlinesDDTextStyle),
+                                      child: Text(listName, style: dlinesDDTextStyle),
                                     ))
                                 .toList(),
                           ),
@@ -298,16 +285,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                       child: ListTile(
                         leading: Icon(Icons.done, color: Colors.black),
                         title: Text('Выполненные', style: dlinesDDTextStyle),
-                        onTap: () {},
-                      )),
-                  Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: ListTile(
-                        leading:
-                            Icon(Icons.delete_outline, color: Colors.black),
-                        title: Text('Удаленные', style: dlinesDDTextStyle),
-                        onTap: () =>
-                            openRoute(context, page: DeletedDeadlinesPage()),
+                        onTap: () => openRoute(context, page: SubmitedDeadlinesPage()),
                       )),
                   Divider(color: Colors.black45),
                 ],
@@ -343,8 +321,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     final _titleController = TextEditingController();
     String _titleValidator(String title) {
       if (title.isEmpty) return 'Поле не может быть пустым';
-      if (availableLists.contains(title))
-        return 'Список с таким именем уже существует';
+      if (availableLists.contains(title)) return 'Список с таким именем уже существует';
       return null;
     }
 
@@ -361,15 +338,10 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
             children: <Widget>[
               ListTile(
                 contentPadding: EdgeInsets.all(0),
-                leading: IconButton(
-                    icon: Icon(Icons.close, color: Colors.black),
-                    onPressed: () => Navigator.pop(context)),
-                title: Text('Новый список',
-                    style: dlinesDDTextStyle.copyWith(
-                        fontWeight: FontWeight.w600)),
+                leading: IconButton(icon: Icon(Icons.close, color: Colors.black), onPressed: () => Navigator.pop(context)),
+                title: Text('Новый список', style: dlinesDDTextStyle.copyWith(fontWeight: FontWeight.w600)),
                 trailing: FlatButton(
-                  child: Text('Готово',
-                      style: TextStyle(color: Colors.blue, fontSize: 17)),
+                  child: Text('Готово', style: TextStyle(color: Colors.blue, fontSize: 17)),
                   onPressed: () {
                     if (_formKey.currentState.validate()) {
                       availableLists.add(_titleController.text);
@@ -409,8 +381,8 @@ class Deadline {
   final String list;
   final String title;
   final String description;
-  final String dateEnd; //dd.MM.yyyy
-  final String isDeleted;
+  final String dateEnd; // dd.MM.yyyy
+  final String timeEnd; // HH:mm
   final String isDone;
 
   const Deadline({
@@ -419,8 +391,8 @@ class Deadline {
     this.title,
     this.description,
     this.dateEnd,
-    this.isDeleted,
     this.isDone,
+    this.timeEnd,
   });
 
   Deadline.fromJsonMap(Map<String, dynamic> map)
@@ -429,7 +401,7 @@ class Deadline {
         title = map['title'],
         description = map['description'],
         dateEnd = map['dateEnd'],
-        isDeleted = map['isDeleted'],
+        timeEnd = map['timeEnd'],
         isDone = map['isDone'];
 
   Map<String, dynamic> toJsonMap() => {
@@ -437,12 +409,12 @@ class Deadline {
         'title': title,
         'description': description,
         'dateEnd': dateEnd,
-        'isDeleted': isDeleted,
+        'timeEnd': timeEnd,
         'isDone': isDone,
       };
 
   @override
   String toString() {
-    return 'Deadline(title: $title, description: $description, date: $dateEnd\n)';
+    return 'Deadline(title: $title, description: $description, date: $dateEnd, time: $timeEnd\n)';
   }
 }

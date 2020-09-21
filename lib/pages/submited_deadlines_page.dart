@@ -14,12 +14,12 @@ import '../constants.dart';
 import 'deadlines_page.dart' show Deadline, DeadlinesPage;
 import 'package:ruz/main.dart' show DataSource, MyCalendar, openRoute;
 
-class DeletedDeadlinesPage extends StatefulWidget {
+class SubmitedDeadlinesPage extends StatefulWidget {
   @override
-  _DeletedDeadlinesPageState createState() => _DeletedDeadlinesPageState();
+  _SubmitedDeadlinesPageState createState() => _SubmitedDeadlinesPageState();
 }
 
-class _DeletedDeadlinesPageState extends State<DeletedDeadlinesPage> {
+class _SubmitedDeadlinesPageState extends State<SubmitedDeadlinesPage> {
   Database _db;
   DataSource events = DataSource([]);
   List<Deadline> _deadlines = [];
@@ -44,16 +44,15 @@ class _DeletedDeadlinesPageState extends State<DeletedDeadlinesPage> {
           title TEXT,
           description TEXT,
           dateEnd TEXT,
-          isDeleted Text,
+          timeEnd TEXT,
           isDone Text)
       ''');
       },
     );
   }
 
-  Future<void> _getDeletedDeadlines() async {
-    List<Map> jsons = await _db
-        .rawQuery('SELECT * FROM $kDbTableName  WHERE isDeleted = "true"');
+  Future<void> _getSubmitedDeadlines() async {
+    List<Map> jsons = await _db.rawQuery('SELECT * FROM $kDbTableName  WHERE isDone = "true"');
     print('${jsons.length} rows retrieved from db!');
 
     _deadlines = jsons.map((json) => Deadline.fromJsonMap(json)).toList();
@@ -64,7 +63,7 @@ class _DeletedDeadlinesPageState extends State<DeletedDeadlinesPage> {
   Future<bool> _asyncInit() async {
     await _memoizer.runOnce(() async {
       await _initDb();
-      await _getDeletedDeadlines();
+      await _getSubmitedDeadlines();
     });
     return true;
   }
@@ -87,6 +86,14 @@ class _DeletedDeadlinesPageState extends State<DeletedDeadlinesPage> {
         onLongPressFunc: (CalendarLongPressDetails details) {});
   }
 
+  Future<void> _deleteForeverDeadline(deadlineId) async {
+    await this._db.rawDelete('''
+        DELETE FROM $kDbTableName
+        WHERE id = "$deadlineId"
+      ''');
+    print('Deleted deadline with id=$deadlineId');
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -106,19 +113,24 @@ class _DeletedDeadlinesPageState extends State<DeletedDeadlinesPage> {
                   icon: Icon(Icons.arrow_back_ios),
                   onPressed: () => openRoute(context, page: DeadlinesPage()),
                 ),
-                Text('Удаленные', style: dlinesDDTextStyle),
+                Text('Выполненные', style: dlinesDDTextStyle),
                 SizedBox(width: 20),
-                IconButton(
-                  icon: Icon(MdiIcons.deleteAlertOutline, size: 28),
-                  onPressed: () {
-                    // TODO: alert dialog: удалить все (for Deadline deletedDD in _deadlines) ...
-                    Fluttertoast.showToast(
-                      msg: 'Удалить все',
-                      textColor: Colors.white,
-                      backgroundColor: Colors.black,
-                    );
-                  },
-                ),
+                if (_deadlines.isNotEmpty)
+                  IconButton(
+                    icon: Icon(MdiIcons.deleteAlertOutline, size: 28),
+                    onPressed: () {
+                      List<String> submitedIds = List.generate(_deadlines.length, (index) => _deadlines[index].id.toString());
+                      for (String ddId in submitedIds) {
+                        _deleteForeverDeadline(ddId);
+                      }
+                      setState(() => _getSubmitedDeadlines());
+                      Fluttertoast.showToast(
+                        msg: 'Все завершенные дедлайны удалены',
+                        textColor: Colors.white,
+                        backgroundColor: Colors.black,
+                      );
+                    },
+                  ),
               ],
             ),
           ),
