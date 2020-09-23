@@ -312,7 +312,7 @@ class HomeDrawer extends StatelessWidget {
             children: <Widget>[
               ListTile(
                 contentPadding: EdgeInsets.only(left: 20),
-                title: Text('Schedule:', style: drawerTextStyle),
+                title: Text('Расписание', style: drawerTextStyle.copyWith(fontSize: 20)),
               ),
               Divider(color: Colors.white, thickness: 1.2),
               ListTile(

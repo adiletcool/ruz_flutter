@@ -338,8 +338,8 @@ class _DeadlinePageState extends State<DeadlinePage> {
                   FocusScope.of(context).unfocus(); // hide keyboard
                   await _addDeadline(Deadline(
                     list: widget.currentList,
-                    title: titleController.text,
-                    description: descController.text,
+                    title: titleController.text.replaceAll('"', '\''),
+                    description: descController.text.replaceAll('"', '\''),
                     dateEnd: dateSet,
                     timeEnd: timeSet,
                     isDone: 'false',
@@ -350,9 +350,29 @@ class _DeadlinePageState extends State<DeadlinePage> {
             )
           ];
 
-    return WillPopScope(
-      onWillPop: () async {
+    void goBackFromDeadline() {
+      if (widget.existingNotes != null && widget.existingNotes['isDone'] == 'true')
+        openRoute(context, page: SubmitedDeadlinesPage());
+      else if (widget.existingNotes == null) {
         Navigator.pushNamed(context, 'DeadlinesPage');
+      } else {
+        if (_formKey.currentState.validate()) {
+          int ddId = existingNotes['id'];
+          _changeDeadline(
+            ddId,
+            titleController.text.replaceAll('"', '\''),
+            descController.text.replaceAll('"', '\''),
+            dateSet,
+            timeSet,
+          );
+          Navigator.pushNamed(context, 'DeadlinesPage');
+        }
+      }
+    }
+
+    return WillPopScope(
+      onWillPop: () {
+        goBackFromDeadline();
         return;
       },
       child: SafeArea(
@@ -364,27 +384,9 @@ class _DeadlinePageState extends State<DeadlinePage> {
             leading: IconButton(
               tooltip: (widget.existingNotes != null) ? 'Сохранить и выйти' : 'Отмена',
               icon: (widget.existingNotes != null && widget.existingNotes['isDone'] == 'false')
-                  ? Text('Ок',
-                      style: headerStyle.copyWith(
-                        color: HexColor.fromHex('#33658a'),
-                      ))
+                  ? Text('Ок', style: headerStyle.copyWith(color: HexColor.fromHex('#33658a')))
                   : Icon(Icons.arrow_back_ios, color: Colors.black),
-              onPressed: () {
-                if (widget.existingNotes != null) {
-                  int ddId = existingNotes['id'];
-                  _changeDeadline(
-                    ddId,
-                    titleController.text,
-                    descController.text,
-                    dateSet,
-                    timeSet,
-                  );
-                }
-                if (widget.existingNotes != null && widget.existingNotes['isDone'] == 'true')
-                  openRoute(context, page: SubmitedDeadlinesPage());
-                else
-                  Navigator.pushNamed(context, 'DeadlinesPage');
-              },
+              onPressed: () => goBackFromDeadline(),
             ),
           ),
           body: getMainBody(context),
