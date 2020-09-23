@@ -81,6 +81,23 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     setState(() {});
   }
 
+  Future<void> _submitDeadline(deadlineId) async {
+    this._db.transaction((Transaction txn) async {
+      int id = await txn.rawUpdate('''
+        UPDATE $kDbTableName
+        SET isDone = "true"
+        WHERE id = $deadlineId
+        ''');
+      print('Submited deadline with id=$id');
+    });
+    Fluttertoast.showToast(
+      msg: 'Выполнено',
+      textColor: Colors.white,
+      backgroundColor: Colors.black,
+    );
+    await _getDeadlines(currentList);
+  }
+
   Future<void> _deleteForeverDeadline(deadlineId) async {
     await this._db.rawDelete('''
         DELETE FROM $kDbTableName
@@ -132,13 +149,11 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
         List<dynamic> res = details.appointments;
         if (res != null) {
           Map<String, dynamic> appNotes = json.decode(details.appointments[0].notes);
-
-          openRoute(context,
-              page: DeadlinePage(
-                currentList: currentList,
-                existingNotes: appNotes,
-              ),
-              beginOffset: Offset(0, 1));
+          openRoute(
+            context,
+            page: DeadlinePage(currentList: currentList, existingNotes: appNotes),
+            beginOffset: Offset(0, 1),
+          );
           print(details.appointments[0].notes);
         }
       },
@@ -154,12 +169,15 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
               children: <Widget>[
                 ListTile(
                   leading: Icon(Icons.done, color: Colors.black),
-                  title: Text('Done'),
-                  onTap: () {},
+                  title: Text('Выполнено'),
+                  onTap: () async {
+                    _submitDeadline(appNotes['id']);
+                    Navigator.pop(context);
+                  },
                 ),
                 ListTile(
                   leading: Icon(Icons.delete, color: Colors.black),
-                  title: Text('Delete'),
+                  title: Text('Удалить'),
                   onTap: () {
                     _deleteForeverDeadline(appNotes['id']);
                     Navigator.pop(context);

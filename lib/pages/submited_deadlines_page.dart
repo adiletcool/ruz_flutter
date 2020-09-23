@@ -70,20 +70,63 @@ class _SubmitedDeadlinesPageState extends State<SubmitedDeadlinesPage> {
 
   Widget getMainBody(BuildContext context) {
     return MyCalendar(
-        viewType: CalendarView.schedule,
-        events: events,
-        openSubjectInfo: (CalendarTapDetails details) {
-          List<dynamic> res = details.appointments;
-          if (res != null) {
-            var appNotes = json.decode(details.appointments[0].notes);
-            openRoute(context,
-                page: DeadlinePage(
-                  currentList: appNotes['list'],
-                  existingNotes: appNotes,
-                ));
-          }
-        },
-        onLongPressFunc: (CalendarLongPressDetails details) {});
+      viewType: CalendarView.schedule,
+      events: events,
+      openSubjectInfo: (CalendarTapDetails details) {
+        List<dynamic> res = details.appointments;
+        if (res != null) {
+          var appNotes = json.decode(details.appointments[0].notes);
+          openRoute(context,
+              page: DeadlinePage(
+                currentList: appNotes['list'],
+                existingNotes: appNotes,
+              ));
+        }
+      },
+      onLongPressFunc: (CalendarLongPressDetails details) => onAppointmentLongPress(context, details),
+    );
+  }
+
+  void onAppointmentLongPress(BuildContext context, CalendarLongPressDetails details) {
+    Map<String, dynamic> appNotes = json.decode(details.appointments[0].notes);
+    showDialog<String>(
+        context: context,
+        builder: (context) => SimpleDialog(
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(Icons.restore, color: Colors.black),
+                  title: Text('Восстановить'),
+                  onTap: () async {
+                    _unSubmitDeadline(appNotes['id']);
+                    openRoute(context, page: DeadlinesPage());
+                    Fluttertoast.showToast(
+                      msg: 'Восстановлено',
+                      textColor: Colors.white,
+                      backgroundColor: Colors.black,
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.delete, color: Colors.black),
+                  title: Text('Удалить'),
+                  onTap: () {
+                    _deleteForeverDeadline(appNotes['id']);
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ));
+  }
+
+  Future<void> _unSubmitDeadline(deadlineId) async {
+    _db.transaction((Transaction txn) async {
+      int id = await txn.rawUpdate('''
+        UPDATE $kDbTableName
+        SET isDone = "false"
+        WHERE id = $deadlineId
+        ''');
+      print('Restored deadline with id=$id');
+    });
   }
 
   Future<void> _deleteForeverDeadline(deadlineId) async {

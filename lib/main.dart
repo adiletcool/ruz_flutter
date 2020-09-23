@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:ruz/pages/deadlines_page.dart';
 import 'package:ruz/pages/search.dart';
+import 'package:syncfusion_localizations/syncfusion_localizations.dart';
 import 'constants.dart';
 import 'pages/other_schedule.dart';
 import 'ruz.dart';
@@ -37,6 +39,9 @@ class MyApp extends StatelessWidget {
             'HomePage': (context) => HomePage(),
             'DeadlinesPage': (context) => DeadlinesPage(),
           },
+          localizationsDelegates: [GlobalMaterialLocalizations.delegate, SfGlobalLocalizations.delegate],
+          supportedLocales: [const Locale('ru')],
+          locale: const Locale('ru'),
         ));
   }
 }
@@ -86,7 +91,7 @@ class _HomePageState extends State<HomePage> {
               _drawerKey.currentState.showSnackBar(
                 SnackBar(
                   duration: Duration(seconds: 3),
-                  content: Text('Offline', style: mainStyle.copyWith(fontSize: 15)),
+                  content: Text('Оффлайн', style: mainStyle.copyWith(fontSize: 15)),
                 ),
               );
               scheduleJson = notesFromSaved; // continues to getAppointments()
@@ -181,7 +186,7 @@ class _HomePageState extends State<HomePage> {
   Widget getFirstLaunchWidget(BuildContext context) {
     return Center(
       child: OutlineButton(
-        child: Text('Set schedule settings', style: dateStyle),
+        child: Text('Установить параметры', style: dateStyle),
         onPressed: () => openRoute(context, page: SettingsPage()),
       ),
     );

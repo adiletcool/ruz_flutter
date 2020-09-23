@@ -63,7 +63,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
       int id = await txn.rawUpdate('''
         UPDATE $kDbTableName
         SET title = "$newTitle", description = "$newDescription", dateEnd =  "$newDate", timeEnd = "$newTime"
-        WHERE id == $ddId
+        WHERE id = $ddId
         ''');
       print('Changed deadline with id=$id');
     });
@@ -84,7 +84,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
       int id = await txn.rawUpdate('''
         UPDATE $kDbTableName
         SET isDone = "true"
-        WHERE id == $deadlineId
+        WHERE id = $deadlineId
         ''');
       print('Submited deadline with id=$id');
     });
@@ -95,7 +95,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
       int id = await txn.rawUpdate('''
         UPDATE $kDbTableName
         SET isDone = "false"
-        WHERE id == $deadlineId
+        WHERE id = $deadlineId
         ''');
       print('Restored deadline with id=$id');
     });
