@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter_svg/svg.dart';
 import 'package:ruz/main.dart';
 import 'package:ruz/pages/submited_deadlines_page.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
@@ -22,7 +23,6 @@ class DeadlinePage extends StatefulWidget {
 
 class _DeadlinePageState extends State<DeadlinePage> {
   final existingNotes;
-
   final _formKey = GlobalKey<FormState>();
   TextEditingController titleController = TextEditingController();
   TextEditingController descController = TextEditingController();
@@ -154,6 +154,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
                     style: TextStyle(fontSize: 22),
                     minLines: 1,
                     maxLines: 5,
+                    // scrollPhysics: ,
                     textCapitalization: TextCapitalization.sentences,
                   ),
                   Divider(color: Colors.black),
@@ -180,11 +181,12 @@ class _DeadlinePageState extends State<DeadlinePage> {
                           minLines: 1,
                           maxLines: 15,
                           style: TextStyle(fontSize: 17),
+                          scrollPadding: EdgeInsets.only(bottom: 120),
                         ),
                       )
                     ],
                   ),
-                  SizedBox(height: 15),
+                  // SizedBox(height: 15),
                   Row(
                     children: <Widget>[
                       Flexible(
@@ -215,6 +217,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
                                   if (isTextFieldAvailable()) {
                                     DatePicker.showDatePicker(
                                       context,
+                                      theme: DatePickerTheme(doneStyle: TextStyle(color: HexColor.fromHex('#33658a'))),
                                       showTitleActions: true,
                                       minTime: DateTime.now(),
                                       maxTime: DateTime.now().add(Duration(days: 365 * 5)),
@@ -243,6 +246,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
                                     FocusScope.of(context).unfocus(); // hide keyboard
                                     DatePicker.showTimePicker(
                                       context,
+                                      theme: DatePickerTheme(doneStyle: TextStyle(color: HexColor.fromHex('#33658a'))),
                                       currentTime: DateFormat("HH:mm").parse(timeSet),
                                       showSecondsColumn: false,
                                       locale: LocaleType.ru,
@@ -275,7 +279,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
             ? <Widget>[
                 IconButton(
                   tooltip: 'Удалить',
-                  icon: Icon(Icons.delete_outline, color: Colors.black, size: 28),
+                  icon: SvgPicture.asset('assets/icons/delete.svg', width: 25),
                   onPressed: () {
                     int ddId = widget.existingNotes['id'];
                     _deleteForeverDeadline(ddId);
@@ -289,7 +293,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
                 ),
                 IconButton(
                   tooltip: 'Выполнено',
-                  icon: Icon(MdiIcons.calendarCheckOutline, color: Colors.black, size: 28),
+                  icon: SvgPicture.asset('assets/icons/calendar_check.svg', width: 25),
                   onPressed: () {
                     int ddId = widget.existingNotes['id'];
                     _submitDeadline(ddId);
@@ -305,7 +309,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
             : <Widget>[
                 IconButton(
                     tooltip: 'Удалить навсегда',
-                    icon: Icon(Icons.delete_forever, color: Colors.black, size: 28),
+                    icon: SvgPicture.asset('assets/icons/delete.svg', width: 25),
                     onPressed: () {
                       int ddId = widget.existingNotes['id'];
                       _deleteForeverDeadline(ddId);
@@ -318,7 +322,7 @@ class _DeadlinePageState extends State<DeadlinePage> {
                     }),
                 IconButton(
                     tooltip: 'Восстановить',
-                    icon: Icon(Icons.restore, color: Colors.black, size: 28),
+                    icon: SvgPicture.asset('assets/icons/restore.svg', width: 25),
                     onPressed: () {
                       int ddId = widget.existingNotes['id'];
                       _unSubmitDeadline(ddId);

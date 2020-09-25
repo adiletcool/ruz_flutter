@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
@@ -168,7 +169,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
         builder: (context) => SimpleDialog(
               children: <Widget>[
                 ListTile(
-                  leading: Icon(Icons.done, color: Colors.black),
+                  leading: SvgPicture.asset('assets/icons/done_square.svg', width: 25),
                   title: Text('Выполнено'),
                   onTap: () async {
                     _submitDeadline(appNotes['id']);
@@ -176,7 +177,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.delete, color: Colors.black),
+                  leading: SvgPicture.asset('assets/icons/delete.svg', width: 25),
                   title: Text('Удалить'),
                   onTap: () {
                     _deleteForeverDeadline(appNotes['id']);
@@ -269,7 +270,7 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                       padding: const EdgeInsets.only(right: 35, left: 30, top: 10),
                       child: Row(
                         children: [
-                          Icon(MdiIcons.formSelect, color: Colors.black),
+                          SvgPicture.asset('assets/icons/my_list.svg', width: 25),
                           SizedBox(width: 30),
                           DropdownButton(
                             underline: Container(),
@@ -320,7 +321,41 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     ListTile(
-                      leading: Icon(Icons.delete_sweep, color: Colors.black),
+                      leading: SvgPicture.asset('assets/icons/pencil_square.svg', width: 25),
+                      title: Text('Переименовать список', style: dlinesDDTextStyle),
+                      onTap: () => null, // см. добавить список, изменить .then()
+                      //TODO
+                    ),
+                    ListTile(
+                      leading: SvgPicture.asset('assets/icons/archive.svg', width: 25),
+                      title: Text('Удалить все задачи', style: dlinesDDTextStyle),
+                      onTap: () async {
+                        if (_deadlines.length > 0) {
+                          List<String> submitedIds = List.generate(_deadlines.length, (index) => _deadlines[index].id.toString());
+                          for (String ddId in submitedIds) {
+                            await this._db.rawDelete('''
+                              DELETE FROM $kDbTableName
+                              WHERE id = "$ddId"''');
+                          }
+                          await _getDeadlines(currentList);
+                          Navigator.pop(context);
+                          Fluttertoast.showToast(
+                            msg: 'Все дедлайны удалены',
+                            textColor: Colors.white,
+                            backgroundColor: Colors.black,
+                          );
+                        } else {
+                          Navigator.pop(context);
+                          Fluttertoast.showToast(
+                            msg: 'Нечего удалять',
+                            textColor: Colors.white,
+                            backgroundColor: Colors.black,
+                          );
+                        }
+                      },
+                    ),
+                    ListTile(
+                      leading: SvgPicture.asset('assets/icons/delete_list.svg', width: 25),
                       title: Text('Удалить список', style: dlinesDDTextStyle),
                       onTap: () => _deleteCurrentList(context),
                     ),
